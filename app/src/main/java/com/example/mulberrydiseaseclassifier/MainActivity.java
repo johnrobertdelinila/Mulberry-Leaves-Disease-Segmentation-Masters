@@ -10,6 +10,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import com.google.android.material.button.MaterialButton;
 
@@ -27,7 +28,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         // Make status bar transparent
-        getWindow().setStatusBarColor(getResources().getColor(android.R.color.transparent));
+        getWindow().setStatusBarColor(ContextCompat.getColor(this, android.R.color.transparent));
         
         btnScanPlant = findViewById(R.id.btnScanPlant);
         btnLoadImages = findViewById(R.id.loadImages);
@@ -64,15 +65,19 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == CAMERA_REQUEST && resultCode == Activity.RESULT_OK) {
-            Toast.makeText(this, "Scan successful!", Toast.LENGTH_LONG).show();
+        if (requestCode == CAMERA_REQUEST && resultCode == Activity.RESULT_OK && data != null && data.getExtras() != null) {
             Bitmap photo = (Bitmap) data.getExtras().get("data");
-            ByteArrayOutputStream stream = new ByteArrayOutputStream();
-            photo.compress(Bitmap.CompressFormat.PNG, 100, stream);
-            byte[] byteArray = stream.toByteArray();
-            Intent intent = new Intent(MainActivity.this, MulberryScannerClassifierActivity.class);
-            intent.putExtra("image", byteArray);
-            startActivity(intent);
+            if (photo != null) {
+                Toast.makeText(this, "Scan successful!", Toast.LENGTH_LONG).show();
+                ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                photo.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                byte[] byteArray = stream.toByteArray();
+                Intent intent = new Intent(MainActivity.this, MulberryScannerClassifierActivity.class);
+                intent.putExtra("image", byteArray);
+                startActivity(intent);
+            } else {
+                Toast.makeText(this, "Failed to capture image!", Toast.LENGTH_LONG).show();
+            }
         } else {
             Toast.makeText(this, "Scan unsuccessful!", Toast.LENGTH_LONG).show();
         }

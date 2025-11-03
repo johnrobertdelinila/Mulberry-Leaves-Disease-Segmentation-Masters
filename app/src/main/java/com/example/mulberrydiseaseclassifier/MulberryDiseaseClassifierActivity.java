@@ -24,6 +24,7 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import org.tensorflow.lite.DataType;
 import org.tensorflow.lite.Interpreter;
@@ -122,10 +123,10 @@ public class MulberryDiseaseClassifierActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-                classText.setTextColor(getResources().getColor(R.color.blue));
-                accuracyText.setTextColor(getResources().getColor(R.color.blue));
-                timeText.setTextColor(getResources().getColor(R.color.blue));
-                classifierBtn.setBackground(getResources().getDrawable(R.drawable.button_style_red));
+                classText.setTextColor(ContextCompat.getColor(MulberryDiseaseClassifierActivity.this, R.color.blue));
+                accuracyText.setTextColor(ContextCompat.getColor(MulberryDiseaseClassifierActivity.this, R.color.blue));
+                timeText.setTextColor(ContextCompat.getColor(MulberryDiseaseClassifierActivity.this, R.color.blue));
+                classifierBtn.setBackground(ContextCompat.getDrawable(MulberryDiseaseClassifierActivity.this, R.drawable.button_style_red));
 
 
                 classText.setText("Press 'CHECK' button to classify");
@@ -150,6 +151,10 @@ public class MulberryDiseaseClassifierActivity extends AppCompatActivity {
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void imageClassifierWithSupportLibrary(){
+        if (bitmap == null) {
+            Toast.makeText(this, "Please select an image first", Toast.LENGTH_SHORT).show();
+            return;
+        }
         try{
 
 //            AssetFileDescriptor fileDescriptor = XRayActivity.this.getAssets().openFd("cxr17.tflite");
@@ -361,9 +366,9 @@ public class MulberryDiseaseClassifierActivity extends AppCompatActivity {
             for (Map.Entry<String, Float> entry : labeledProbability.entrySet()) {
                 if (entry.getValue()==maxValueInMap) {
 
-                    classText.setTextColor(getResources().getColor(R.color.green));
-                    accuracyText.setTextColor(getResources().getColor(R.color.green));
-                    timeText.setTextColor(getResources().getColor(R.color.green));
+                    classText.setTextColor(ContextCompat.getColor(MulberryDiseaseClassifierActivity.this, R.color.green));
+                    accuracyText.setTextColor(ContextCompat.getColor(MulberryDiseaseClassifierActivity.this, R.color.green));
+                    timeText.setTextColor(ContextCompat.getColor(MulberryDiseaseClassifierActivity.this, R.color.green));
 
                     classText.setText("Class: "+entry.getKey());
                     accuracyText.setText("Accuracy: "+entry.getValue());
@@ -375,7 +380,7 @@ public class MulberryDiseaseClassifierActivity extends AppCompatActivity {
                     selectImageText.setVisibility(View.GONE);
 
                     classifierBtn.setText(entry.getKey());
-                    classifierBtn.setBackground(getResources().getDrawable(R.drawable.button_style_green));
+                    classifierBtn.setBackground(ContextCompat.getDrawable(MulberryDiseaseClassifierActivity.this, R.drawable.button_style_green));
                 }
             }
 

@@ -27,6 +27,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import org.tensorflow.lite.DataType;
 import org.tensorflow.lite.Interpreter;
@@ -144,10 +145,10 @@ public class MulberryScannerClassifierActivity extends Activity {
             @Override
             public void onClick(View v) {
 
-                classText.setTextColor(getResources().getColor(R.color.blue));
-                accuracyText.setTextColor(getResources().getColor(R.color.blue));
-                timeText.setTextColor(getResources().getColor(R.color.blue));
-                classifierBtn.setBackground(getResources().getDrawable(R.drawable.button_style_red));
+                classText.setTextColor(ContextCompat.getColor(MulberryScannerClassifierActivity.this, R.color.blue));
+                accuracyText.setTextColor(ContextCompat.getColor(MulberryScannerClassifierActivity.this, R.color.blue));
+                timeText.setTextColor(ContextCompat.getColor(MulberryScannerClassifierActivity.this, R.color.blue));
+                classifierBtn.setBackground(ContextCompat.getDrawable(MulberryScannerClassifierActivity.this, R.drawable.button_style_red));
 
 
                 classText.setText("Press 'CHECK' button to classify");
@@ -199,18 +200,23 @@ public class MulberryScannerClassifierActivity extends Activity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data)
     {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == CAMERA_REQUEST && resultCode == Activity.RESULT_OK)
+        if (requestCode == CAMERA_REQUEST && resultCode == Activity.RESULT_OK && data != null && data.getExtras() != null)
         {
-            Toast.makeText(this,"Scan successful!", Toast.LENGTH_LONG).show();
             Bitmap photo = (Bitmap) data.getExtras().get("data");
-            imageView.setImageBitmap(photo);
-            selectImageText.setVisibility(View.VISIBLE);
-
+            if (photo != null) {
+                Toast.makeText(this,"Scan successful!", Toast.LENGTH_LONG).show();
+                bitmap = photo;
+                imageView.setImageBitmap(photo);
+                selectImageText.setText("Image is ready for classification!");
+                selectImageText.setVisibility(View.VISIBLE);
+            } else {
+                Toast.makeText(this,"Failed to capture image!", Toast.LENGTH_LONG).show();
+                imageView.setImageResource(R.drawable.camera);
+            }
         }
         else{
             Toast.makeText(this,"Scan unsuccessful!", Toast.LENGTH_LONG).show();
             imageView.setImageResource(R.drawable.camera);
-
         }
     }
 
@@ -219,6 +225,10 @@ public class MulberryScannerClassifierActivity extends Activity {
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void imageClassifierWithSupportLibrary(){
+        if (bitmap == null) {
+            Toast.makeText(this, "Please capture an image first", Toast.LENGTH_SHORT).show();
+            return;
+        }
         try{
 
 //            AssetFileDescriptor fileDescriptor = XRayActivity.this.getAssets().openFd("cxr17.tflite");
@@ -427,9 +437,9 @@ public class MulberryScannerClassifierActivity extends Activity {
             for (Map.Entry<String, Float> entry : labeledProbability.entrySet()) {
                 if (entry.getValue()==maxValueInMap) {
 
-                    classText.setTextColor(getResources().getColor(R.color.green));
-                    accuracyText.setTextColor(getResources().getColor(R.color.green));
-                    timeText.setTextColor(getResources().getColor(R.color.green));
+                    classText.setTextColor(ContextCompat.getColor(MulberryScannerClassifierActivity.this, R.color.green));
+                    accuracyText.setTextColor(ContextCompat.getColor(MulberryScannerClassifierActivity.this, R.color.green));
+                    timeText.setTextColor(ContextCompat.getColor(MulberryScannerClassifierActivity.this, R.color.green));
 
                     classText.setText("Class: "+entry.getKey());
                     accuracyText.setText("Accuracy: "+entry.getValue());
@@ -441,7 +451,7 @@ public class MulberryScannerClassifierActivity extends Activity {
                     selectImageText.setVisibility(View.GONE);
 
                     classifierBtn.setText(entry.getKey());
-                    classifierBtn.setBackground(getResources().getDrawable(R.drawable.button_style_green));
+                    classifierBtn.setBackground(ContextCompat.getDrawable(MulberryScannerClassifierActivity.this, R.drawable.button_style_green));
                 }
             }
 

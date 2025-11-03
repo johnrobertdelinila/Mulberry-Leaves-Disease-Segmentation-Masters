@@ -18,14 +18,17 @@
 
         <activity
             android:name=".MulberryDiseaseClassifierActivity"
+            android:exported="false"
             android:screenOrientation="nosensor" />
 
         <activity
             android:name=".MulberryScannerClassifierActivity"
+            android:exported="false"
             android:screenOrientation="nosensor" />
 
         <activity
             android:name=".MainActivity"
+            android:exported="false"
             android:screenOrientation="nosensor" />
 
         <activity
