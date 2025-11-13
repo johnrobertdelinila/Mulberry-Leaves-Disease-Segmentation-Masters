@@ -1,7 +1,0 @@
-com.example.mulberrydiseaseclassifier.test.app-androidTest-0 /Users/johnrobertdelinila/AndroidStudioProjects/MulberryDiseaseClassifierApp/app/build/generated/res/resValues/androidTest/debug
-com.example.mulberrydiseaseclassifier.test.app-androidTest-1 /Users/johnrobertdelinila/AndroidStudioProjects/MulberryDiseaseClassifierApp/app/build/generated/res/rs/androidTest/debug
-com.example.mulberrydiseaseclassifier.test.app-mergeDebugAndroidTestResources-2 /Users/johnrobertdelinila/AndroidStudioProjects/MulberryDiseaseClassifierApp/app/build/intermediates/incremental/debugAndroidTest/mergeDebugAndroidTestResources/merged.dir
-com.example.mulberrydiseaseclassifier.test.app-mergeDebugAndroidTestResources-3 /Users/johnrobertdelinila/AndroidStudioProjects/MulberryDiseaseClassifierApp/app/build/intermediates/incremental/debugAndroidTest/mergeDebugAndroidTestResources/stripped.dir
-com.example.mulberrydiseaseclassifier.test.app-merged_res-4 /Users/johnrobertdelinila/AndroidStudioProjects/MulberryDiseaseClassifierApp/app/build/intermediates/merged_res/debugAndroidTest
-com.example.mulberrydiseaseclassifier.test.app-androidTest-5 /Users/johnrobertdelinila/AndroidStudioProjects/MulberryDiseaseClassifierApp/app/src/androidTest/res
-com.example.mulberrydiseaseclassifier.test.app-androidTestDebug-6 /Users/johnrobertdelinila/AndroidStudioProjects/MulberryDiseaseClassifierApp/app/src/androidTestDebug/res
