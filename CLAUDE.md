@@ -6,6 +6,50 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Android application for mulberry leaf disease detection using TensorFlow Lite and MobileNet. The app provides two classification workflows: real-time camera scanning and gallery image selection. Classifies into 3 disease categories: Disease Free Leaves, Potential Leaf Rust, and Potential Leaf Spot.
 
+## Cross-Platform Setup (Mac & Windows)
+
+This project is configured for seamless development on both Mac and Windows. Follow these steps after cloning:
+
+### Initial Setup
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd MulberryDiseaseClassifier-Masters
+   ```
+
+2. **Create local configuration files**
+
+   Copy `gradle.properties.template` to `gradle.properties`:
+   ```bash
+   # Mac/Linux
+   cp gradle.properties.template gradle.properties
+
+   # Windows (PowerShell)
+   Copy-Item gradle.properties.template gradle.properties
+
+   # Windows (Command Prompt)
+   copy gradle.properties.template gradle.properties
+   ```
+
+3. **Open in Android Studio**
+   - Android Studio will automatically create `local.properties` with your SDK path
+   - No manual JDK configuration needed - Android Studio uses its embedded JDK
+
+### Important Notes
+
+- **Never commit** `local.properties` or `gradle.properties` - they contain machine-specific paths
+- **Do not** set `org.gradle.java.home` in gradle.properties - this breaks cross-platform compatibility
+- All IDE-specific settings in `.idea/` are gitignored to prevent conflicts
+- The project uses Android Studio's embedded JDK (JBR 17) automatically
+
+### Troubleshooting
+
+If you see SDK path errors after pulling:
+1. Verify `local.properties` exists (Android Studio creates it automatically)
+2. Check that `gradle.properties` doesn't contain machine-specific paths
+3. Click "Sync Project with Gradle Files" in Android Studio
+
 ## Build & Development Commands
 
 ### Building the App

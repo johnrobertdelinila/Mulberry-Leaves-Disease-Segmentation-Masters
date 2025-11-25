@@ -20,5 +20,6 @@ android.useAndroidX=true
 # thereby reducing the size of the R class for that library
 android.nonTransitiveRClass=true
 
-# Set JDK 17 for Gradle
-org.gradle.java.home=/Users/johnrobertdelinila/Library/Java/JavaVirtualMachines/jbr-17.0.14/Contents/Home
+# IMPORTANT: Copy this file to gradle.properties and customize for your machine
+# DO NOT set org.gradle.java.home here - let Android Studio use its embedded JDK
+# This ensures cross-platform compatibility between Mac and Windows
