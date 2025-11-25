@@ -672,27 +672,40 @@ public class MulberryDiseaseClassifierActivity extends AppCompatActivity {
         }
     }
 
-    private Bitmap getScaledBitmap(Bitmap b, int reqWidth, int reqHeight)
-    {
-        int bWidth = b.getWidth();
-        int bHeight = b.getHeight();
+    /**
+     * Downsamples bitmap to a reasonable size to prevent OOM errors.
+     * Maintains aspect ratio while limiting max dimension to 1024px.
+     * This provides good quality input for the model without excessive memory usage.
+     */
+    private Bitmap downsampleBitmap(Bitmap original, int maxDimension) {
+        int width = original.getWidth();
+        int height = original.getHeight();
 
-        Log.d(TAG, "Bitmap Width: "+ b.getWidth() +  " Bitmap Height: "+ b.getHeight());
-        Log.d(TAG, "Required Width: "+ reqWidth +  " Required Height: "+ reqHeight);
+        // If image is already smaller than max dimension, return as-is
+        if (width <= maxDimension && height <= maxDimension) {
+            Log.d(TAG, "Image already optimal size: " + width + "x" + height);
+            return original;
+        }
 
+        // Calculate scaling factor to limit max dimension
+        float scale = Math.min(
+            (float) maxDimension / width,
+            (float) maxDimension / height
+        );
 
-        int nWidth = reqWidth;
-        int nHeight = reqHeight;
+        int newWidth = Math.round(width * scale);
+        int newHeight = Math.round(height * scale);
 
-        float parentRatio = (float) reqHeight / reqWidth;
+        Log.d(TAG, "Downsampling from " + width + "x" + height + " to " + newWidth + "x" + newHeight);
 
-        nHeight = bHeight;
-        nWidth = (int) (reqWidth * parentRatio);
+        Bitmap downsampled = Bitmap.createScaledBitmap(original, newWidth, newHeight, true);
 
-        Matrix m = new Matrix();
-        m.setRectToRect(new RectF(0, 0, b.getWidth(), b.getHeight()), new RectF(0, 0, reqWidth, reqHeight), Matrix.ScaleToFit.FILL);
-        return Bitmap.createBitmap(b, 0, 0, b.getWidth(), b.getHeight(), m, true);
+        // Recycle original if it's different from downsampled
+        if (downsampled != original) {
+            original.recycle();
+        }
 
+        return downsampled;
     }
 
     @Override
@@ -702,9 +715,12 @@ public class MulberryDiseaseClassifierActivity extends AppCompatActivity {
         if(requestCode==12 && resultCode==RESULT_OK && data!=null) {
             imageuri = data.getData();
             try {
-                bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), imageuri);
-                bitmap = getScaledBitmap(bitmap, 124, 124);
-                Log.d(TAG, "Final Bitmap Width: "+ bitmap.getWidth() +  " Final Bitmap Height: "+ bitmap.getHeight());
+                Bitmap originalBitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), imageuri);
+                Log.d(TAG, "Original Bitmap Width: "+ originalBitmap.getWidth() +  " Height: "+ originalBitmap.getHeight());
+
+                // Downsample to max 1024px to prevent OOM while maintaining quality
+                bitmap = downsampleBitmap(originalBitmap, 1024);
+                Log.d(TAG, "Final Bitmap Width: "+ bitmap.getWidth() +  " Height: "+ bitmap.getHeight());
 
                 imageView.setImageBitmap(bitmap);
             } catch (IOException e) {

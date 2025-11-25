@@ -1,212 +1,78 @@
-# CLAUDE.md
+# Mulberry Disease Classifier - Android App
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
-## Project Overview
-
-Android application for mulberry leaf disease detection using TensorFlow Lite and MobileNet. The app provides two classification workflows: real-time camera scanning and gallery image selection. Classifies into 3 disease categories: Disease Free Leaves, Potential Leaf Rust, and Potential Leaf Spot.
+Android app for mulberry leaf disease detection using TensorFlow Lite MobileNet. Classifies into 3 categories: Disease Free Leaves, Potential Leaf Rust, Potential Leaf Spot.
 
 ## Cross-Platform Setup (Mac & Windows)
 
-This project is configured for seamless development on both Mac and Windows. Follow these steps after cloning:
-
-### Initial Setup
-
-1. **Clone the repository**
+**Initial Setup:**
+1. Clone repo and copy `gradle.properties.template` to `gradle.properties`
    ```bash
-   git clone <repository-url>
-   cd MulberryDiseaseClassifier-Masters
+   cp gradle.properties.template gradle.properties  # Mac/Linux
+   copy gradle.properties.template gradle.properties  # Windows
    ```
+2. Open in Android Studio (auto-creates `local.properties`)
 
-2. **Create local configuration files**
+**Important:** Never commit `local.properties` or `gradle.properties` - they're machine-specific and gitignored.
 
-   Copy `gradle.properties.template` to `gradle.properties`:
-   ```bash
-   # Mac/Linux
-   cp gradle.properties.template gradle.properties
+**Troubleshooting:** If SDK errors occur after pull, run "Sync Project with Gradle Files" in Android Studio.
 
-   # Windows (PowerShell)
-   Copy-Item gradle.properties.template gradle.properties
+## Architecture
 
-   # Windows (Command Prompt)
-   copy gradle.properties.template gradle.properties
-   ```
+### App Flow
+```
+SplashActivity → MainActivity → Camera/Gallery → Classification
+```
 
-3. **Open in Android Studio**
-   - Android Studio will automatically create `local.properties` with your SDK path
-   - No manual JDK configuration needed - Android Studio uses its embedded JDK
+### Key Files
+- **SplashActivity.java**: Entry point, 2s animation
+- **MainActivity.java**: Navigation hub, camera permissions
+- **MulberryScannerClassifierActivity.java**: Camera workflow, PNG 100% quality transfer
+- **MulberryDiseaseClassifierActivity.java**: Gallery workflow, smart downsampling (max 1024px)
 
-### Important Notes
+### Image Processing Differences
 
-- **Never commit** `local.properties` or `gradle.properties` - they contain machine-specific paths
-- **Do not** set `org.gradle.java.home` in gradle.properties - this breaks cross-platform compatibility
-- All IDE-specific settings in `.idea/` are gitignored to prevent conflicts
-- The project uses Android Studio's embedded JDK (JBR 17) automatically
+**Camera Workflow:**
+- Captures image, compresses to PNG at 100% quality
+- Passes as byte array via Intent
+- TensorFlow processes at original resolution
 
-### Troubleshooting
+**Gallery Workflow:**
+- Loads from MediaStore
+- Smart downsampling: limits to 1024px max dimension while preserving aspect ratio
+- Prevents OOM errors with high-res images while maintaining quality
+- TensorFlow processes downsampled image
 
-If you see SDK path errors after pulling:
-1. Verify `local.properties` exists (Android Studio creates it automatically)
-2. Check that `gradle.properties` doesn't contain machine-specific paths
-3. Click "Sync Project with Gradle Files" in Android Studio
+Both use identical TensorFlow pipeline: ResizeWithCropOrPadOp → ResizeOp (NEAREST_NEIGHBOR) → NormalizeOp (mean=0.0, std=255.0)
 
-## Build & Development Commands
+## ML Model
 
-### Building the App
+**Files:** `app/src/main/ml/FinalMobilenetFold1.tflite`, `labels.txt`
+
+**Processing:**
+1. Model queries its own input dimensions dynamically
+2. ImageProcessor: crop to square → resize to model size → normalize to [0,1]
+3. GPU acceleration (falls back to XNNPACK)
+4. Returns 3-class probabilities
+
+**Classes:** Disease Free Leaves, Potential Leaf Rust, Potential Leaf Spot
+
+## Build Configuration
+
+- **Min SDK:** 26 | **Target SDK:** 34 | **Compile SDK:** 34
+- **Gradle:** 8.5 | **AGP:** 8.2.2 | **Java:** 17
+- **Key Dependencies:** TensorFlow Lite 0.3.0/2.3.0, Dexter 6.2.2
+
+## Common Commands
+
 ```bash
-./gradlew build
+./gradlew build           # Build app
+./gradlew installDebug    # Install debug to device
+./gradlew clean           # Clean build artifacts
+./gradlew test            # Run tests
 ```
 
-### Running Tests
-```bash
-# Run unit tests
-./gradlew test
+## Known Issues & Optimizations
 
-# Run instrumented tests (requires connected device/emulator)
-./gradlew connectedAndroidTest
-```
-
-### Installing to Device
-```bash
-# Debug build
-./gradlew installDebug
-
-# Release build
-./gradlew installRelease
-```
-
-### Cleaning Build Artifacts
-```bash
-./gradlew clean
-```
-
-### Linting
-```bash
-./gradlew lint
-```
-
-## Architecture Overview
-
-### Activity Flow
-```
-SplashActivity (entry point, 2s animation)
-    ↓
-MainActivity (home hub)
-    ├─→ "Scan Plant" → Camera → MulberryScannerClassifierActivity
-    └─→ "Load Images" → Gallery → MulberryDiseaseClassifierActivity
-```
-
-### Key Components
-
-**SplashActivity** (`app/src/main/java/com/example/mulberrydiseaseclassifier/SplashActivity.java`)
-- App entry point with animated splash screen
-- 2-second delay before transitioning to MainActivity
-- All activities locked to portrait orientation (screenOrientation="nosensor")
-
-**MainActivity** (`app/src/main/java/com/example/mulberrydiseaseclassifier/MainActivity.java`)
-- Primary navigation hub
-- Handles camera permissions (CAMERA permission required)
-- Routes to either camera capture or gallery selection
-
-**MulberryScannerClassifierActivity** (`app/src/main/java/com/example/mulberrydiseaseclassifier/MulberryScannerClassifierActivity.java`)
-- Receives Bitmap from camera as Intent extra ("image" byte array)
-- Implements TensorFlow Lite inference pipeline
-- Displays results: disease name, confidence score, inference time
-
-**MulberryDiseaseClassifierActivity** (`app/src/main/java/com/example/mulberrydiseaseclassifier/MulberryDiseaseClassifierActivity.java`)
-- Gallery-based classification workflow
-- Scales images to 124x124 before processing
-- Contains Recognition helper class for result formatting
-- Identical inference logic to Scanner activity
-
-### ML Model Integration
-
-**Model Location:**
-- Model: `app/src/main/ml/FinalMobilenetFold1.tflite`
-- Labels: `app/src/main/ml/labels.txt`
-
-**Architecture:** MobileNet (Fold 1 from k-fold cross-validation)
-
-**Output Classes:**
-1. Disease Free Leaves
-2. Potential Leaf Rust
-3. Potential Leaf Spot
-
-**Image Processing Pipeline:**
-1. ResizeWithCropOrPadOp - Center crops to square
-2. ResizeOp - Resizes to model input size (NEAREST_NEIGHBOR)
-3. NormalizeOp - Mean: 0.0, Std: 255.0 (normalizes to [0, 1])
-
-**Inference Acceleration:**
-- GPU acceleration via GpuDelegate when available
-- Falls back to XNNPACK CPU acceleration
-- Device compatibility checked via CompatibilityList
-
-**Model Loading:**
-- Currently loads on every "CHECK" button click (not cached)
-- Uses FileUtil.loadMappedFile() for model
-- Uses FileUtil.loadLabels() for label file
-
-### Key Dependencies
-
-TensorFlow Lite stack (from `app/build.gradle`):
-```gradle
-implementation 'org.tensorflow:tensorflow-lite-support:0.3.0'
-implementation 'org.tensorflow:tensorflow-lite-metadata:0.3.0'
-implementation 'org.tensorflow:tensorflow-lite-gpu:2.3.0'
-implementation 'org.tensorflow:tensorflow-lite-gpu-delegate-plugin:0.3.0'
-```
-
-Runtime permissions:
-```gradle
-implementation 'com.karumi:dexter:6.2.2'
-```
-
-### Build Configuration
-
-**Android Gradle Plugin:** 8.2.2
-**Gradle Version:** 8.5
-**Min SDK:** 26 (Android 8.0 Oreo)
-**Target SDK:** 34 (Android 14)
-**Compile SDK:** 34
-**Java Version:** 17 (JetBrains Runtime)
-**ML Model Binding:** Enabled in build.gradle
-**Namespace:** Declared in build.gradle (com.example.mulberrydiseaseclassifier)
-
-## Development Notes
-
-### Model Inference Workflow
-Both classifier activities follow the same pattern:
-1. Load model file (.tflite) and labels (.txt) from assets
-2. Create Interpreter with GPU/XNNPACK acceleration options
-3. Query input tensor shape from model
-4. Build ImageProcessor pipeline (crop, resize, normalize)
-5. Convert Bitmap → TensorImage → TensorBuffer
-6. Run interpreter.run() with input/output buffers
-7. Post-process with TensorProcessor and TensorLabel
-8. Extract max confidence prediction
-
-### Data Passing Between Activities
-- Camera images passed as byte arrays via Intent extras (key: "image")
-- Bitmap converted: `bitmap.compress(ByteArrayOutputStream) → byteArray`
-- Receiver reconstructs: `BitmapFactory.decodeByteArray(byteArray)`
-
-### Current Implementation Considerations
-- Extensive debug logging present (Log.d statements for tensor values)
-- Model reloads on every classification (potential optimization: cache in memory)
-- Both classifier activities have duplicate inference code (consider extracting to shared utility)
-- Image preprocessing manually verified pixel-by-pixel in logs
-
-### Testing the App
-1. Requires physical device or emulator with camera capability
-2. Grant camera permissions when prompted
-3. Test both workflows: camera capture and gallery selection
-4. Verify results show disease name, confidence (0.0-1.0), and inference time (ms)
-5. Check GPU acceleration status in logs
-
-### File Structure Notes
-- Java source: `app/src/main/java/com/example/mulberrydiseaseclassifier/`
-- Layouts: `app/src/main/res/layout/`
-- Drawables: `app/src/main/res/drawable/`
-- Animations: `app/src/main/res/anim/`
-- ML assets: `app/src/main/ml/`
+- Model reloads on each classification (could cache in memory)
+- Duplicate inference code in both classifier activities
+- Extensive debug logging for tensor values
