@@ -49,7 +49,12 @@ public class ClassificationResult {
      */
     public String getFormattedButtonText(boolean includeStaging) {
         if (includeStaging && stage >= 0) {
-            return className + " - Stage " + stage;
+            // Special message for Stage 0 (healthy plant)
+            if (stage == 0) {
+                return "Plant is Healthy";
+            }
+            // Format for stages 1-6
+            return "Stage " + stage + " Disease";
         }
         return className;
     }
