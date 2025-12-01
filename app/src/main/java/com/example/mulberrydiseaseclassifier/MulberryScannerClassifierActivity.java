@@ -431,29 +431,12 @@ public class MulberryScannerClassifierActivity extends Activity {
             // Gets the map of label and probability.
             Map<String, Float> labeledProbability = new TensorLabel(labels, probabilityProcessor.process(probabilityImageBuffer)).getMapWithFloatValue();
 
+            // Process results and calculate stage
+            ClassificationResult result = processClassificationResults(
+                labeledProbability, endTimeForReference - startTimeForReference);
 
-            float maxValueInMap = (Collections.max(labeledProbability.values()));
-
-            for (Map.Entry<String, Float> entry : labeledProbability.entrySet()) {
-                if (entry.getValue()==maxValueInMap) {
-
-                    classText.setTextColor(ContextCompat.getColor(MulberryScannerClassifierActivity.this, R.color.green));
-                    accuracyText.setTextColor(ContextCompat.getColor(MulberryScannerClassifierActivity.this, R.color.green));
-                    timeText.setTextColor(ContextCompat.getColor(MulberryScannerClassifierActivity.this, R.color.green));
-
-                    classText.setText("Class: "+entry.getKey());
-                    accuracyText.setText("Accuracy: "+entry.getValue());
-                    timeText.setText("Time: "+ (endTimeForReference - startTimeForReference) +" ms");
-
-                    classText.setVisibility(View.VISIBLE);
-                    timeText.setVisibility(View.VISIBLE);
-                    accuracyText.setVisibility(View.VISIBLE);
-                    selectImageText.setVisibility(View.GONE);
-
-                    classifierBtn.setText(entry.getKey());
-                    classifierBtn.setBackground(ContextCompat.getDrawable(MulberryScannerClassifierActivity.this, R.drawable.button_style_green));
-                }
-            }
+            // Update UI with results
+            updateUIWithResults(result);
 
 //            for(int i=0; i<1000; i++){
 //
@@ -502,6 +485,72 @@ public class MulberryScannerClassifierActivity extends Activity {
 
 
 
+    }
+
+    /**
+     * Process classification results and calculate disease stage
+     * @param labeledProbability Map of class labels to confidence scores
+     * @param processingTime Time taken for classification in milliseconds
+     * @return ClassificationResult object with class, confidence, time, and stage
+     */
+    private ClassificationResult processClassificationResults(
+            Map<String, Float> labeledProbability, long processingTime) {
+
+        // Find the classification with highest confidence
+        float maxConfidence = Collections.max(labeledProbability.values());
+        String predictedClass = null;
+
+        for (Map.Entry<String, Float> entry : labeledProbability.entrySet()) {
+            if (entry.getValue() == maxConfidence) {
+                predictedClass = entry.getKey();
+                break;
+            }
+        }
+
+        // Check if staging is enabled
+        boolean stagingEnabled = AppPreferences.isStagingEnabled(this);
+
+        // Calculate stage if enabled
+        int stage = -1;
+        if (stagingEnabled && predictedClass != null) {
+            stage = DiseaseStageCalculator.calculateStage(predictedClass, maxConfidence);
+        }
+
+        // Return result object
+        return new ClassificationResult(predictedClass, maxConfidence, processingTime, stage);
+    }
+
+    /**
+     * Update UI with classification results
+     * @param result Classification result to display
+     */
+    private void updateUIWithResults(ClassificationResult result) {
+        // Check if staging is enabled for button text formatting
+        boolean stagingEnabled = AppPreferences.isStagingEnabled(this);
+
+        // Update text colors
+        classText.setTextColor(ContextCompat.getColor(
+            MulberryScannerClassifierActivity.this, R.color.green));
+        accuracyText.setTextColor(ContextCompat.getColor(
+            MulberryScannerClassifierActivity.this, R.color.green));
+        timeText.setTextColor(ContextCompat.getColor(
+            MulberryScannerClassifierActivity.this, R.color.green));
+
+        // Update text content
+        classText.setText("Class: " + result.getClassName());
+        accuracyText.setText(result.getFormattedAccuracy());
+        timeText.setText(result.getFormattedTime());
+
+        // Update button with formatted text (includes stage if enabled)
+        classifierBtn.setText(result.getFormattedButtonText(stagingEnabled));
+        classifierBtn.setBackground(ContextCompat.getDrawable(
+            MulberryScannerClassifierActivity.this, R.drawable.button_style_green));
+
+        // Update visibility
+        classText.setVisibility(View.VISIBLE);
+        timeText.setVisibility(View.VISIBLE);
+        accuracyText.setVisibility(View.VISIBLE);
+        selectImageText.setVisibility(View.GONE);
     }
 
     //    private void imageClassifierwithTaskLibrary() throws IOException {

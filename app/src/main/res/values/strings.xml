@@ -12,4 +12,13 @@
     <string name="load">Load</string>
     <string name="scan">Scan</string>
 
+    <!-- Settings Screen -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_classification_header">Classification Settings</string>
+    <string name="settings_staging_label">Disease Staging</string>
+    <string name="settings_staging_description">Show disease progression stages (0-6) along with classification results</string>
+    <string name="settings_staging_enabled_toast">Disease staging enabled</string>
+    <string name="settings_staging_disabled_toast">Disease staging disabled</string>
+    <string name="back_button">Back</string>
+
 </resources>
