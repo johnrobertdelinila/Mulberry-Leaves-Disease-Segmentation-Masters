@@ -7,7 +7,7 @@ package com.example.mulberrydiseaseclassifier;
 public class DiseaseStageCalculator {
 
     // Class name constants (must match labels.txt exactly)
-    public static final String CLASS_DISEASE_FREE = "Disease Free Leaves";
+    public static final String CLASS_EARLY_SPOT = "Early Spot Detected";
     public static final String CLASS_LEAF_SPOT = "Potential Leaf Spot";
     public static final String CLASS_LEAF_RUST = "Potential Leaf Rust";
 
@@ -30,8 +30,8 @@ public class DiseaseStageCalculator {
         // Normalize for comparison
         String normalized = className.trim();
 
-        if (normalized.equals(CLASS_DISEASE_FREE)) {
-            return calculateDiseaseFreeLeavesStage(confidence);
+        if (normalized.equals(CLASS_EARLY_SPOT)) {
+            return calculateEarlySpotDetectedStage(confidence);
         } else if (normalized.equals(CLASS_LEAF_SPOT)) {
             return calculateLeafSpotStage(confidence);
         } else if (normalized.equals(CLASS_LEAF_RUST)) {
@@ -42,57 +42,54 @@ public class DiseaseStageCalculator {
     }
 
     /**
-     * Disease Free Leaves staging:
+     * Early Spot Detected staging:
      * - 1.0 → Stage 0 (Super Healthy)
-     * - <1.0 → Stage 1
+     * - 0.80-0.99 → Stage 1 (very mild / beginning indicators)
+     * - <0.80 → Stage 2 (mild but more pronounced)
      */
-    private static int calculateDiseaseFreeLeavesStage(float confidence) {
+    private static int calculateEarlySpotDetectedStage(float confidence) {
         if (isEqual(confidence, 1.0f)) {
-            return 0;
+            return 0;  // Perfect confidence = Healthy
+        } else if (confidence >= 0.80f) {
+            return 1;  // 0.80-0.99 = Stage 1 (very mild)
         }
-        return 1;
+        return 2;      // < 0.80 = Stage 2 (more pronounced)
     }
 
     /**
-     * Potential Leaf Spot staging:
-     * - 1.0 → Stage 6
-     * - 0.99 → Stage 5
-     * - 0.98 - 0.95 → Stage 4
-     * - 0.94 - 0.90 → Stage 3
-     * - <0.90 → Stage 2
+     * Potential Leaf Spot staging (same as Leaf Rust):
+     * - 1.0 → Stage 6 (severe)
+     * - 0.95-0.99 → Stage 5 (high likelihood serious)
+     * - 0.85-0.94 → Stage 4 (moderate)
+     * - <0.85 → Stage 3 (early/developing)
      */
     private static int calculateLeafSpotStage(float confidence) {
         if (isEqual(confidence, 1.0f)) {
-            return 6;
-        } else if (isEqual(confidence, 0.99f)) {
-            return 5;
+            return 6;  // 1.0 = Stage 6 (severe)
         } else if (confidence >= 0.95f) {
-            return 4;
-        } else if (confidence >= 0.90f) {
-            return 3;
+            return 5;  // 0.95-0.99 = Stage 5 (serious)
+        } else if (confidence >= 0.85f) {
+            return 4;  // 0.85-0.94 = Stage 4 (moderate)
         }
-        return 2;
+        return 3;      // < 0.85 = Stage 3 (early/developing)
     }
 
     /**
      * Potential Leaf Rust staging:
-     * - 1.0 → Stage 6
-     * - 0.99 - 0.95 → Stage 5
-     * - 0.94 - 0.90 → Stage 4
-     * - 0.89 - 0.76 → Stage 3
-     * - <0.76 → Stage 2
+     * - 1.0 → Stage 6 (severe)
+     * - 0.95-0.99 → Stage 5 (high likelihood serious)
+     * - 0.85-0.94 → Stage 4 (moderate)
+     * - <0.85 → Stage 3 (early/developing)
      */
     private static int calculateLeafRustStage(float confidence) {
         if (isEqual(confidence, 1.0f)) {
-            return 6;
+            return 6;  // 1.0 = Stage 6 (severe)
         } else if (confidence >= 0.95f) {
-            return 5;
-        } else if (confidence >= 0.90f) {
-            return 4;
-        } else if (confidence >= 0.76f) {
-            return 3;
+            return 5;  // 0.95-0.99 = Stage 5 (serious)
+        } else if (confidence >= 0.85f) {
+            return 4;  // 0.85-0.94 = Stage 4 (moderate)
         }
-        return 2;
+        return 3;      // < 0.85 = Stage 3 (early/developing)
     }
 
     /**

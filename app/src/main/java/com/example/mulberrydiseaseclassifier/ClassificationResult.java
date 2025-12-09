@@ -43,6 +43,19 @@ public class ClassificationResult {
     }
 
     /**
+     * Get display-friendly class name based on stage.
+     * Stage 0 shows "Plant is Healthy" instead of the raw class name
+     * to avoid showing "Early Spot Detected" for healthy plants.
+     * @return Display-friendly class name
+     */
+    public String getDisplayClassName() {
+        if (stage == 0) {
+            return "Plant is Healthy";
+        }
+        return className;
+    }
+
+    /**
      * Get formatted button text based on staging preference
      * @param includeStaging Whether to include stage in the text
      * @return Formatted text for button display
