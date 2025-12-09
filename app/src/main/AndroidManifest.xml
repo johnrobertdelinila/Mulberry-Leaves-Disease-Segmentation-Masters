@@ -37,6 +37,11 @@
             android:screenOrientation="nosensor" />
 
         <activity
+            android:name=".OnboardingActivity"
+            android:exported="false"
+            android:screenOrientation="nosensor" />
+
+        <activity
             android:name=".SplashActivity"
             android:exported="true"
             android:label="@string/app_name"
