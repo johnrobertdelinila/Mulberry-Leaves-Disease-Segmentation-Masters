@@ -21,15 +21,4 @@
     <string name="settings_staging_disabled_toast">Disease staging disabled</string>
     <string name="back_button">Back</string>
 
-    <!-- Onboarding -->
-    <string name="onboarding_skip">Skip</string>
-    <string name="onboarding_continue">Continue</string>
-    <string name="onboarding_get_started">Get Started</string>
-    <string name="onboarding_slide1_title">Welcome to Plant Disease Identifier</string>
-    <string name="onboarding_slide1_desc">Identify mulberry leaf diseases instantly using AI-powered analysis</string>
-    <string name="onboarding_slide2_title">Take Clear Photos</string>
-    <string name="onboarding_slide2_desc">For best results, photograph a single leaf with good lighting</string>
-    <string name="onboarding_slide3_title">Instant Analysis</string>
-    <string name="onboarding_slide3_desc">Get accurate disease diagnosis in seconds with detailed stage information</string>
-
 </resources>

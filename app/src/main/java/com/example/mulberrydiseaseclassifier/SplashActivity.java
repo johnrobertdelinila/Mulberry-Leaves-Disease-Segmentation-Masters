@@ -41,17 +41,8 @@ public class SplashActivity extends AppCompatActivity {
             public void run() {
 
                 progressBar.setVisibility(View.GONE);
-
-                // Check if user has seen onboarding
-                Intent intent;
-                if (!AppPreferences.hasSeenOnboarding(SplashActivity.this)) {
-                    intent = new Intent(SplashActivity.this, OnboardingActivity.class);
-                } else {
-                    intent = new Intent(SplashActivity.this, MainActivity.class);
-                }
-
+                Intent intent =new Intent(SplashActivity.this, com.example.mulberrydiseaseclassifier.MainActivity.class);
                 startActivity(intent);
-                overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
                 finish();
 
             }

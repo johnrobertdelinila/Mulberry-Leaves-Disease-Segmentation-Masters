@@ -1,27 +1,18 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Theme.MulberryDiseaseClassifier" parent="Theme.MaterialComponents.Light.NoActionBar">
-        <!-- Primary colors -->
-        <item name="colorPrimary">@color/sage_green</item>
-        <item name="colorPrimaryVariant">@color/sage_green_dark</item>
-        <item name="colorOnPrimary">@color/cream_card</item>
-
-        <!-- Secondary colors -->
-        <item name="colorSecondary">@color/sage_green_light</item>
-        <item name="colorSecondaryVariant">@color/sage_green</item>
-        <item name="colorOnSecondary">@color/text_primary</item>
-
-        <!-- Background colors -->
-        <item name="android:windowBackground">@color/cream_background</item>
-        <item name="backgroundColor">@color/cream_background</item>
-
-        <!-- Status bar -->
-        <item name="android:statusBarColor">@color/cream_background</item>
+        <!-- Primary brand color. -->
+        <item name="colorPrimary">@color/green</item>
+        <item name="colorPrimaryVariant">@color/dark_green</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <!-- Secondary brand color. -->
+        <item name="colorSecondary">@color/green</item>
+        <item name="colorSecondaryVariant">@color/dark_green</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <!-- Status bar color. -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">true</item>
-
-        <!-- Navigation bar -->
-        <item name="android:navigationBarColor">@color/cream_card</item>
-        <item name="android:windowLightNavigationBar">true</item>
+        <!-- Customize your theme here. -->
     </style>
 
 

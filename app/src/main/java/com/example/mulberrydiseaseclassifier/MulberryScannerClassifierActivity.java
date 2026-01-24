@@ -536,18 +536,20 @@ public class MulberryScannerClassifierActivity extends Activity {
         timeText.setTextColor(ContextCompat.getColor(
             MulberryScannerClassifierActivity.this, R.color.green));
 
-        // Update text content - use display class name (shows "Plant is Healthy" for Stage 0)
-        classText.setText("Class: " + result.getDisplayClassName());
+        // Update text content
+        classText.setText("Class: " + result.getClassName());
+        accuracyText.setText(result.getFormattedAccuracy());
+        timeText.setText(result.getFormattedTime());
 
         // Update button with formatted text (includes stage if enabled)
         classifierBtn.setText(result.getFormattedButtonText(stagingEnabled));
         classifierBtn.setBackground(ContextCompat.getDrawable(
             MulberryScannerClassifierActivity.this, R.drawable.button_style_green));
 
-        // Update visibility - hide technical details (accuracy/time) for farmer-friendly UI
+        // Update visibility
         classText.setVisibility(View.VISIBLE);
-        timeText.setVisibility(View.GONE);
-        accuracyText.setVisibility(View.GONE);
+        timeText.setVisibility(View.VISIBLE);
+        accuracyText.setVisibility(View.VISIBLE);
         selectImageText.setVisibility(View.GONE);
     }
 

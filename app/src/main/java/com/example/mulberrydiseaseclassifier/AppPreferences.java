@@ -11,9 +11,7 @@ public class AppPreferences {
 
     private static final String PREF_NAME = "MulberryDiseaseClassifierPrefs";
     private static final String KEY_STAGING_ENABLED = "disease_staging_enabled";
-    private static final String KEY_HAS_SEEN_ONBOARDING = "has_seen_onboarding";
     private static final boolean DEFAULT_STAGING_ENABLED = true;
-    private static final boolean DEFAULT_HAS_SEEN_ONBOARDING = false;
 
     /**
      * Check if disease staging is enabled
@@ -34,27 +32,6 @@ public class AppPreferences {
         SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         prefs.edit()
              .putBoolean(KEY_STAGING_ENABLED, enabled)
-             .apply();
-    }
-
-    /**
-     * Check if user has seen the onboarding flow
-     * @param context Application context
-     * @return true if onboarding has been seen, false otherwise
-     */
-    public static boolean hasSeenOnboarding(Context context) {
-        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
-        return prefs.getBoolean(KEY_HAS_SEEN_ONBOARDING, DEFAULT_HAS_SEEN_ONBOARDING);
-    }
-
-    /**
-     * Mark onboarding as seen
-     * @param context Application context
-     */
-    public static void setOnboardingSeen(Context context) {
-        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
-        prefs.edit()
-             .putBoolean(KEY_HAS_SEEN_ONBOARDING, true)
              .apply();
     }
 }

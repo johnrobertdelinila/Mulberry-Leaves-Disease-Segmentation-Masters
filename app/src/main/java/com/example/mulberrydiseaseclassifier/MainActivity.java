@@ -15,7 +15,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.io.ByteArrayOutputStream;
 
@@ -24,22 +23,17 @@ public class MainActivity extends AppCompatActivity {
     private static final int CAMERA_REQUEST = 1888;
     private static final int MY_CAMERA_PERMISSION_CODE = 100;
     private MaterialButton btnScanPlant, btnLoadImages;
-    private BottomNavigationView bottomNavigationView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Make status bar color match theme
-        getWindow().setStatusBarColor(ContextCompat.getColor(this, R.color.cream_background));
-
+        // Make status bar transparent
+        getWindow().setStatusBarColor(ContextCompat.getColor(this, android.R.color.transparent));
+        
         btnScanPlant = findViewById(R.id.btnScanPlant);
         btnLoadImages = findViewById(R.id.loadImages);
-        bottomNavigationView = findViewById(R.id.bottom_navigation);
-
-        // Set up bottom navigation
-        setupBottomNavigation();
 
         btnLoadImages.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, MulberryDiseaseClassifierActivity.class);
@@ -88,45 +82,6 @@ public class MainActivity extends AppCompatActivity {
             }
         } else {
             Toast.makeText(this, "Scan unsuccessful!", Toast.LENGTH_LONG).show();
-        }
-    }
-
-    /**
-     * Set up bottom navigation bar
-     */
-    private void setupBottomNavigation() {
-        bottomNavigationView.setSelectedItemId(R.id.nav_home);
-
-        bottomNavigationView.setOnItemSelectedListener(item -> {
-            int itemId = item.getItemId();
-
-            if (itemId == R.id.nav_home) {
-                // Already on home, do nothing
-                return true;
-            } else if (itemId == R.id.nav_scan) {
-                // Navigate to gallery classifier
-                Intent intent = new Intent(MainActivity.this, MulberryDiseaseClassifierActivity.class);
-                startActivity(intent);
-                overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
-                return true;
-            } else if (itemId == R.id.nav_settings) {
-                // Navigate to settings
-                Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
-                startActivity(intent);
-                overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
-                return true;
-            }
-
-            return false;
-        });
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        // Ensure home is selected when returning to this activity
-        if (bottomNavigationView != null) {
-            bottomNavigationView.setSelectedItemId(R.id.nav_home);
         }
     }
 

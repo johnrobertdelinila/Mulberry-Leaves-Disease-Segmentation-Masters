@@ -1,20 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- New Cream/Sage Color Palette for UI Redesign -->
-    <color name="cream_background">#F5F1E8</color>
-    <color name="cream_card">#FFFFFF</color>
-    <color name="sage_green">#6B8E6B</color>
-    <color name="sage_green_dark">#557A55</color>
-    <color name="sage_green_light">#8FA88F</color>
-    <color name="text_primary">#2C3E2C</color>
-    <color name="text_secondary">#6B7B6B</color>
-    <color name="text_tertiary">#9BA89B</color>
-    <color name="accent_success">#7CB992</color>
-    <color name="accent_warning">#F4A261</color>
-    <color name="accent_error">#E76F51</color>
-
-    <!-- Legacy Colors (Backward Compatibility) -->
     <color name="colorPrimary">#8B4513</color>
     <color name="colorPrimaryDark">#CD5C5C</color>
     <color name="colorAccent">#8B4513</color>
