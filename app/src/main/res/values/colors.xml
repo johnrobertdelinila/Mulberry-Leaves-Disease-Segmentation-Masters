@@ -158,4 +158,37 @@
     <color name="medium_blue">#0000CD</color>
     <color name="dark_blue">#00008B</color>
     <color name="navy">#000080</color>
+
+    <!-- Onboarding theme colors -->
+    <color name="sage_green">#7C9A6D</color>
+    <color name="sage_green_light">#A8C49A</color>
+    <color name="cream_background">#FAF8F5</color>
+    <color name="cream_card">#FFFDF9</color>
+    <color name="text_primary">#2D3A2E</color>
+    <color name="text_secondary">#6B7D6C</color>
+    <color name="accent_success">#4CAF50</color>
+    <color name="accent_error">#E53935</color>
+    <color name="text_tertiary">#9CA89D</color>
+
+    <!-- Premium onboarding colors -->
+    <color name="sage_green_dark">#5C7A4D</color>
+    <color name="onboarding_bg_start">#FFFFFF</color>
+    <color name="onboarding_bg_end">#F5F9F2</color>
+    <color name="tip_good_bg">#E8F5E9</color>
+    <color name="tip_bad_bg">#FFEBEE</color>
+    <color name="divider_light">#E8EFE5</color>
+
+    <!-- Home screen colors (matching splash screen palette) -->
+    <color name="home_bg_start">#FFFFFF</color>
+    <color name="home_bg_end">#FFF5F5</color>
+    <color name="icon_glow">#2087CEEB</color>
+    <color name="coral_primary">#F67280</color>
+    <color name="coral_dark">#E85A6B</color>
+    <color name="coral_light">#FFB6B9</color>
+    <color name="sky_blue_primary">#87CEEB</color>
+    <color name="sky_blue_dark">#5FB3D4</color>
+    <color name="sky_blue_light">#B0E0F0</color>
+    <color name="home_text_primary">#2D3A3A</color>
+    <color name="home_text_secondary">#6B7D7D</color>
+    <color name="home_divider">#F0E8E8</color>
 </resources>

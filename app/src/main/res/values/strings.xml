@@ -19,6 +19,66 @@
     <string name="settings_staging_description">Show disease progression stages (0-6) along with classification results</string>
     <string name="settings_staging_enabled_toast">Disease staging enabled</string>
     <string name="settings_staging_disabled_toast">Disease staging disabled</string>
+    <string name="settings_time_label">Show Processing Time</string>
+    <string name="settings_time_description">Display the time taken to analyze the image</string>
+    <string name="settings_time_enabled_toast">Processing time display enabled</string>
+    <string name="settings_time_disabled_toast">Processing time display disabled</string>
+    <string name="settings_accuracy_label">Show Confidence Score</string>
+    <string name="settings_accuracy_description">Display the confidence percentage of the classification result</string>
+    <string name="settings_accuracy_enabled_toast">Confidence score display enabled</string>
+    <string name="settings_accuracy_disabled_toast">Confidence score display disabled</string>
+    <string name="settings_advanced_mode_label">Advanced Mode</string>
+    <string name="settings_advanced_mode_description">Enhanced accuracy using cloud processing (requires internet)</string>
+    <string name="settings_advanced_mode_enabled_toast">Advanced mode enabled</string>
+    <string name="settings_advanced_mode_disabled_toast">Advanced mode disabled</string>
     <string name="back_button">Back</string>
+
+    <!-- Onboarding Screen -->
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_continue">Continue</string>
+    <string name="onboarding_slide1_title">Smart Leaf Analysis</string>
+    <string name="onboarding_slide1_desc">Instantly detect mulberry leaf diseases with advanced AI technology. Get accurate results in seconds.</string>
+    <string name="onboarding_slide2_title">Capture Tips</string>
+    <string name="onboarding_slide2_subtitle">For accurate results</string>
+    <string name="onboarding_slide3_title">Ready to Begin</string>
+    <string name="onboarding_slide3_desc">Take a photo or choose from your gallery to start analyzing your mulberry leaves.</string>
+    <string name="onboarding_get_started">Get Started</string>
+    <string name="onboarding_tip_good">Single leaf, well-lit, focused</string>
+    <string name="onboarding_tip_bad1">Avoid blurry or dark images</string>
+    <string name="onboarding_tip_bad2">Avoid multiple leaves in frame</string>
+
+    <!-- Home screen -->
+    <string name="home_app_name">Mulberry Care</string>
+    <string name="home_headline">Detect Disease</string>
+    <string name="home_subheadline">in seconds</string>
+    <string name="home_description">Machine Learning analysis for healthy mulberry leaves</string>
+    <string name="home_action_scan_title">Scan Leaf</string>
+    <string name="home_action_scan_subtitle">Take a photo with your camera</string>
+    <string name="home_action_gallery_title">Choose Photo</string>
+    <string name="home_action_gallery_subtitle">Select from your gallery</string>
+    <string name="home_footer_tagline">Powered by AI technology</string>
+
+    <!-- Classifier Screen -->
+    <string name="classifier_screen_title">Leaf Analysis</string>
+    <string name="classifier_tap_to_select">Tap to select image</string>
+    <string name="classifier_tap_to_capture">Tap to capture image</string>
+    <string name="classifier_check">Check</string>
+    <string name="classifier_healthy">Healthy</string>
+    <string name="classifier_classification">Classification</string>
+    <string name="classifier_disease_stage">Disease Stage</string>
+    <string name="classifier_confidence">Confidence</string>
+    <string name="classifier_time">Time</string>
+    <string name="classifier_image_ready">Image ready for analysis</string>
+
+    <!-- Disclaimer -->
+    <string name="classifier_disclaimer">This result is based on image analysis and is not a final diagnosis. Please consult an expert for confirmation.</string>
+
+    <!-- Advanced Mode Analysis -->
+    <string name="gemini_analysis_toggle">Advanced Mode</string>
+    <string name="gemini_analysis_subtitle">Enhanced accuracy (requires more time)</string>
+    <string name="gemini_analyzing">Processing image…</string>
+    <string name="gemini_no_internet">Analysis failed. Please try again.</string>
+    <string name="gemini_error">Analysis failed. Please try again.</string>
+    <string name="gemini_api_key_missing">Analysis failed. Please try again.</string>
 
 </resources>

@@ -17,14 +17,21 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
+
+import com.google.android.material.card.MaterialCardView;
 
 import org.tensorflow.lite.DataType;
 import org.tensorflow.lite.Interpreter;
@@ -72,45 +79,68 @@ public class MulberryDiseaseClassifierActivity extends AppCompatActivity {
     ImageView imageView;
     Uri imageuri;
     Button classifierBtn;
-    TextView classText, accuracyText, timeText, selectImageText;
-    private ImageView backBtn;
+    TextView classText, accuracyText, timeText, selectImageText, stageValue;
+    private ImageView backBtn, uploadIcon;
+    private View placeholderOverlay;
+    private MaterialCardView resultsCard, imageCard;
+    private FrameLayout classIconBg;
+    private LinearLayout stageRow, accuracySection, timeSection, metricsRow;
+    private View metricsDivider;
+    private ProgressBar progressBar;
+    private GeminiApiService geminiApiService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mulberry_disease_classifier);
 
-        imageView=(ImageView)findViewById(R.id.plant_upload_image);
-        classifierBtn =(Button)findViewById(R.id.plant_check_button);
-        classText =(TextView)findViewById(R.id.plant_classify_text);
-        accuracyText=(TextView)findViewById(R.id.plant_classify_text_2);
-        timeText=(TextView)findViewById(R.id.plant_classify_text_3);
-        selectImageText=(TextView)findViewById(R.id.plant_select_image_text);
+        // Bind views
+        imageView = findViewById(R.id.plant_upload_image);
+        classifierBtn = findViewById(R.id.plant_check_button);
+        classText = findViewById(R.id.plant_classify_text);
+        accuracyText = findViewById(R.id.plant_classify_text_2);
+        timeText = findViewById(R.id.plant_classify_text_3);
+        selectImageText = findViewById(R.id.plant_select_image_text);
+        stageValue = findViewById(R.id.stage_value);
+        backBtn = findViewById(R.id.plant_back_button);
+        uploadIcon = findViewById(R.id.upload_icon);
+        placeholderOverlay = findViewById(R.id.placeholder_overlay);
+        resultsCard = findViewById(R.id.results_card);
+        imageCard = findViewById(R.id.image_card);
+        classIconBg = findViewById(R.id.class_icon_bg);
+        stageRow = findViewById(R.id.stage_row);
+        accuracySection = findViewById(R.id.accuracy_section);
+        timeSection = findViewById(R.id.time_section);
+        metricsRow = findViewById(R.id.metrics_row);
+        metricsDivider = findViewById(R.id.metrics_divider);
+        progressBar = findViewById(R.id.plant_progressbar);
 
-        backBtn=findViewById(R.id.plant_back_button);
+        // Initialize Gemini API service with context for smart key rotation
+        geminiApiService = new GeminiApiService(this);
 
-
-        classText.setText(getResources().getString(R.string.classifier_line_1));
-        accuracyText.setText("Accuracy range: 0.0 - 1.0");
-        timeText.setText("Time unit is displayed in ms");
-
-        classText.setVisibility(View.VISIBLE);
-        accuracyText.setVisibility(View.VISIBLE);
-        timeText.setVisibility(View.VISIBLE);
-        selectImageText.setVisibility(View.VISIBLE);
+        // Initial state - hide results card
+        resultsCard.setVisibility(View.GONE);
 
         classifierBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    imageClassifierWithSupportLibrary();
+                if (bitmap == null) {
+                    Toast.makeText(MulberryDiseaseClassifierActivity.this,
+                        "Please select an image first", Toast.LENGTH_SHORT).show();
+                    return;
                 }
 
+                if (AppPreferences.isClaudeEnabled(MulberryDiseaseClassifierActivity.this)) {
+                    // Use Gemini AI analysis (Advanced Mode)
+                    performGeminiAnalysis();
+                } else {
+                    // Use local ML model
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        imageClassifierWithSupportLibrary();
+                    }
+                }
             }
         });
-
-
 
         backBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -119,42 +149,33 @@ public class MulberryDiseaseClassifierActivity extends AppCompatActivity {
             }
         });
 
-        imageView.setOnClickListener(new View.OnClickListener() {
+        // Image card click to select image
+        imageCard.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                // Reset UI for new selection
+                resetUIForNewSelection();
 
-                classText.setTextColor(ContextCompat.getColor(MulberryDiseaseClassifierActivity.this, R.color.blue));
-                accuracyText.setTextColor(ContextCompat.getColor(MulberryDiseaseClassifierActivity.this, R.color.blue));
-                timeText.setTextColor(ContextCompat.getColor(MulberryDiseaseClassifierActivity.this, R.color.blue));
-                classifierBtn.setBackground(ContextCompat.getDrawable(MulberryDiseaseClassifierActivity.this, R.drawable.button_style_red));
-
-
-                classText.setText("Press 'CHECK' button to classify");
-                accuracyText.setText("Accuracy range: 0.0 - 1.0");
-                timeText.setText("Time unit is displayed in ms");
-                classifierBtn.setText("Check");
-
-                classText.setVisibility(View.VISIBLE);
-                accuracyText.setVisibility(View.VISIBLE);
-                timeText.setVisibility(View.VISIBLE);
-                selectImageText.setVisibility(View.GONE);
-
-                Intent intent=new Intent();
+                Intent intent = new Intent();
                 intent.setType("image/*");
                 intent.setAction(Intent.ACTION_GET_CONTENT);
-                startActivityForResult(Intent.createChooser(intent,"Select Picture"),12);
+                startActivityForResult(Intent.createChooser(intent, "Select Picture"), 12);
             }
         });
+    }
 
-
+    /**
+     * Reset UI when selecting a new image
+     */
+    private void resetUIForNewSelection() {
+        classifierBtn.setText(R.string.classifier_check);
+        resultsCard.setVisibility(View.GONE);
+        selectImageText.setText(R.string.classifier_tap_to_select);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void imageClassifierWithSupportLibrary(){
-        if (bitmap == null) {
-            Toast.makeText(this, "Please select an image first", Toast.LENGTH_SHORT).show();
-            return;
-        }
+        // Note: bitmap null check is done in onClick handler
         try{
 
 //            AssetFileDescriptor fileDescriptor = XRayActivity.this.getAssets().openFd("cxr17.tflite");
@@ -455,32 +476,121 @@ public class MulberryDiseaseClassifierActivity extends AppCompatActivity {
      * @param result Classification result to display
      */
     private void updateUIWithResults(ClassificationResult result) {
-        // Check if staging is enabled for button text formatting
+        // Check settings
         boolean stagingEnabled = AppPreferences.isStagingEnabled(this);
+        boolean timeEnabled = AppPreferences.isTimeEnabled(this);
+        boolean accuracyEnabled = AppPreferences.isAccuracyEnabled(this);
 
-        // Update text colors
-        classText.setTextColor(ContextCompat.getColor(
-            MulberryDiseaseClassifierActivity.this, R.color.green));
-        accuracyText.setTextColor(ContextCompat.getColor(
-            MulberryDiseaseClassifierActivity.this, R.color.green));
-        timeText.setTextColor(ContextCompat.getColor(
-            MulberryDiseaseClassifierActivity.this, R.color.green));
+        // Show results card
+        resultsCard.setVisibility(View.VISIBLE);
 
-        // Update text content
-        classText.setText("Class: " + result.getClassName());
-        accuracyText.setText(result.getFormattedAccuracy());
-        timeText.setText(result.getFormattedTime());
+        // Update classification text with friendly name
+        classText.setText(result.getDisplayClassName());
 
-        // Update button with formatted text (includes stage if enabled)
-        classifierBtn.setText(result.getFormattedButtonText(stagingEnabled));
-        classifierBtn.setBackground(ContextCompat.getDrawable(
-            MulberryDiseaseClassifierActivity.this, R.drawable.button_style_green));
+        // Update icon background based on health status
+        classIconBg.setBackgroundResource(result.isHealthy()
+            ? R.drawable.result_icon_bg_success
+            : R.drawable.result_icon_bg_warning);
 
-        // Update visibility
-        classText.setVisibility(View.VISIBLE);
-        timeText.setVisibility(View.VISIBLE);
-        accuracyText.setVisibility(View.VISIBLE);
+        // Stage row visibility and value
+        stageRow.setVisibility(stagingEnabled ? View.VISIBLE : View.GONE);
+        if (stagingEnabled) {
+            stageValue.setText(result.getStageDisplayText());
+        }
+
+        // Metrics section visibility
+        boolean showMetrics = timeEnabled || accuracyEnabled;
+        metricsDivider.setVisibility(showMetrics ? View.VISIBLE : View.GONE);
+        metricsRow.setVisibility(showMetrics ? View.VISIBLE : View.GONE);
+
+        // Accuracy section
+        accuracySection.setVisibility(accuracyEnabled ? View.VISIBLE : View.GONE);
+        if (accuracyEnabled) {
+            accuracyText.setText(String.format("%.2f", result.getConfidence()));
+        }
+
+        // Time section
+        timeSection.setVisibility(timeEnabled ? View.VISIBLE : View.GONE);
+        if (timeEnabled) {
+            timeText.setText(result.getProcessingTimeMs() + " ms");
+        }
+
+        // Button shows stage only if staging enabled, otherwise show "Done"
+        if (stagingEnabled) {
+            classifierBtn.setText(result.getStageDisplayText());
+        } else {
+            classifierBtn.setText("Done");
+        }
+
+        // Hide instruction text after classification
         selectImageText.setVisibility(View.GONE);
+    }
+
+    /**
+     * Perform leaf analysis using Gemini AI
+     */
+    private void performGeminiAnalysis() {
+        // Check network connectivity
+        if (!GeminiApiService.isNetworkAvailable(this)) {
+            Toast.makeText(this, R.string.gemini_no_internet, Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        // Check API key
+        if (!geminiApiService.isApiKeyConfigured()) {
+            Toast.makeText(this, R.string.gemini_api_key_missing, Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        // Show loading state
+        progressBar.setVisibility(View.VISIBLE);
+        classifierBtn.setEnabled(false);
+        classifierBtn.setText(R.string.gemini_analyzing);
+        resultsCard.setVisibility(View.GONE);
+
+        // Call Gemini API with smart key rotation
+        geminiApiService.analyzeLeafImage(bitmap, new GeminiApiService.GeminiCallback() {
+            @Override
+            public void onSuccess(ClaudeAnalysisResult result, long processingTimeMs) {
+                runOnUiThread(() -> {
+                    progressBar.setVisibility(View.GONE);
+                    classifierBtn.setEnabled(true);
+
+                    // Convert to ClassificationResult and update UI
+                    ClassificationResult classResult = result.toClassificationResult(processingTimeMs);
+                    updateUIWithResults(classResult);
+                });
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                runOnUiThread(() -> {
+                    progressBar.setVisibility(View.GONE);
+                    classifierBtn.setEnabled(true);
+                    classifierBtn.setText(R.string.classifier_check);
+                    Toast.makeText(MulberryDiseaseClassifierActivity.this,
+                        R.string.gemini_error, Toast.LENGTH_LONG).show();
+                    Log.e(TAG, "Gemini API error: " + errorMessage);
+                });
+            }
+
+            @Override
+            public void onRateLimitExhausted() {
+                runOnUiThread(() -> {
+                    Log.w(TAG, "All API keys exhausted, falling back to local ML model");
+                    // Reset key index for next session
+                    AppPreferences.resetApiKeyIndex(MulberryDiseaseClassifierActivity.this);
+                    // Hide progress bar but keep button disabled during local processing
+                    progressBar.setVisibility(View.GONE);
+                    classifierBtn.setText(R.string.classifier_check);
+                    // Use local ML model as fallback
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        imageClassifierWithSupportLibrary();
+                    }
+                    classifierBtn.setEnabled(true);
+                });
+            }
+        });
     }
 
     //    private void imageClassifierwithTaskLibrary() throws IOException {
@@ -772,7 +882,14 @@ public class MulberryDiseaseClassifierActivity extends AppCompatActivity {
                 bitmap = downsampleBitmap(originalBitmap, 1024);
                 Log.d(TAG, "Final Bitmap Width: "+ bitmap.getWidth() +  " Height: "+ bitmap.getHeight());
 
+                // Show image and hide placeholder
+                imageView.setVisibility(View.VISIBLE);
                 imageView.setImageBitmap(bitmap);
+                placeholderOverlay.setVisibility(View.GONE);
+                uploadIcon.setVisibility(View.GONE);
+
+                // Update instruction text
+                selectImageText.setText(R.string.classifier_image_ready);
             } catch (IOException e) {
                 e.printStackTrace();
             }

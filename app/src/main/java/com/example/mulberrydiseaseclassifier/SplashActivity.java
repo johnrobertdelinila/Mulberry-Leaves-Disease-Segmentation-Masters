@@ -41,7 +41,9 @@ public class SplashActivity extends AppCompatActivity {
             public void run() {
 
                 progressBar.setVisibility(View.GONE);
-                Intent intent =new Intent(SplashActivity.this, com.example.mulberrydiseaseclassifier.MainActivity.class);
+
+                // Always show onboarding screen
+                Intent intent = new Intent(SplashActivity.this, OnboardingActivity.class);
                 startActivity(intent);
                 finish();
 

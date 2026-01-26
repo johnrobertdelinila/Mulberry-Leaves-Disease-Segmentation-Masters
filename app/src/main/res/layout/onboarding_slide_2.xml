@@ -1,106 +1,215 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
+<ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/cream_background"
-    android:padding="32dp">
+    android:fillViewport="true">
 
-    <!-- Title -->
-    <TextView
-        android:id="@+id/slide_title"
-        android:layout_width="wrap_content"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/onboarding_slide2_title"
-        android:textSize="28sp"
-        android:textColor="@color/text_primary"
-        android:fontFamily="@font/montserrat_bold"
-        android:textAlignment="center"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/examples_container"
-        app:layout_constraintVertical_chainStyle="packed"/>
+        android:paddingHorizontal="24dp"
+        android:paddingBottom="24dp">
 
-    <!-- Photo Examples Container -->
-    <LinearLayout
-        android:id="@+id/examples_container"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_marginTop="40dp"
-        app:layout_constraintTop_toBottomOf="@id/slide_title"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent">
+        <!-- Icon container -->
+        <FrameLayout
+            android:id="@+id/icon_container"
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:layout_marginTop="40dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
 
-        <!-- Good Example -->
-        <LinearLayout
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/icon_circle_bg"/>
+
+            <ImageView
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_lightbulb"
+                android:scaleType="fitCenter"/>
+
+        </FrameLayout>
+
+        <!-- Title -->
+        <TextView
+            android:id="@+id/slide_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/onboarding_slide2_title"
+            android:textSize="28sp"
+            android:textColor="@color/text_primary"
+            android:fontFamily="@font/montserrat_bold"
+            android:textAlignment="center"
+            android:letterSpacing="-0.01"
+            android:layout_marginTop="32dp"
+            app:layout_constraintTop_toBottomOf="@id/icon_container"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <!-- Subtitle -->
+        <TextView
+            android:id="@+id/slide_subtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/onboarding_slide2_subtitle"
+            android:textSize="14sp"
+            android:textColor="@color/text_tertiary"
+            android:fontFamily="@font/montserrat"
+            android:textAlignment="center"
+            android:layout_marginTop="8dp"
+            app:layout_constraintTop_toBottomOf="@id/slide_title"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <!-- Tips Card Container -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/tips_card"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginBottom="16dp">
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_baseline_arrow_back_24"
-                app:tint="@color/accent_success"
-                android:rotation="180"/>
-            <TextView
-                android:layout_width="wrap_content"
+            android:layout_marginTop="32dp"
+            android:layout_marginHorizontal="8dp"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="@android:color/white"
+            app:layout_constraintTop_toBottomOf="@id/slide_subtitle"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Clear, focused single leaf"
-                android:textSize="16sp"
-                android:textColor="@color/text_secondary"
-                android:fontFamily="@font/montserrat"
-                android:layout_marginStart="12dp"/>
-        </LinearLayout>
+                android:orientation="vertical"
+                android:padding="20dp">
 
-        <!-- Bad Example 1 -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginBottom="16dp">
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_baseline_arrow_back_24"
-                app:tint="@color/accent_error"/>
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Too close or blurry"
-                android:textSize="16sp"
-                android:textColor="@color/text_secondary"
-                android:fontFamily="@font/montserrat"
-                android:layout_marginStart="12dp"/>
-        </LinearLayout>
+                <!-- Good tip -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:background="@drawable/tip_card_bg"
+                    android:padding="16dp"
+                    android:layout_marginBottom="12dp">
 
-        <!-- Bad Example 2 -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_baseline_arrow_back_24"
-                app:tint="@color/accent_error"/>
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Multiple leaves in frame"
-                android:textSize="16sp"
-                android:textColor="@color/text_secondary"
-                android:fontFamily="@font/montserrat"
-                android:layout_marginStart="12dp"/>
-        </LinearLayout>
+                    <FrameLayout
+                        android:layout_width="40dp"
+                        android:layout_height="40dp">
 
-    </LinearLayout>
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/circle"
+                            android:backgroundTint="@color/tip_good_bg"/>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_check_circle"/>
+
+                    </FrameLayout>
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/onboarding_tip_good"
+                        android:textSize="15sp"
+                        android:textColor="@color/text_primary"
+                        android:fontFamily="@font/montserrat"
+                        android:layout_marginStart="16dp"/>
+
+                </LinearLayout>
+
+                <!-- Bad tip 1 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:background="@drawable/tip_card_bg"
+                    android:padding="16dp"
+                    android:layout_marginBottom="12dp">
+
+                    <FrameLayout
+                        android:layout_width="40dp"
+                        android:layout_height="40dp">
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/circle"
+                            android:backgroundTint="@color/tip_bad_bg"/>
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_cancel_circle"/>
+
+                    </FrameLayout>
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/onboarding_tip_bad1"
+                        android:textSize="15sp"
+                        android:textColor="@color/text_primary"
+                        android:fontFamily="@font/montserrat"
+                        android:layout_marginStart="16dp"/>
+
+                </LinearLayout>
+
+                <!-- Bad tip 2 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:background="@drawable/tip_card_bg"
+                    android:padding="16dp">
+
+                    <FrameLayout
+                        android:layout_width="40dp"
+                        android:layout_height="40dp">
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/circle"
+                            android:backgroundTint="@color/tip_bad_bg"/>
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_cancel_circle"/>
+
+                    </FrameLayout>
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/onboarding_tip_bad2"
+                        android:textSize="15sp"
+                        android:textColor="@color/text_primary"
+                        android:fontFamily="@font/montserrat"
+                        android:layout_marginStart="16dp"/>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</ScrollView>

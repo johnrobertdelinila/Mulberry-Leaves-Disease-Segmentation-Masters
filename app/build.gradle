@@ -14,6 +14,9 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        // Gemini API Key - set in gradle.properties as GEMINI_API_KEY=AIza...
+        buildConfigField "String", "GEMINI_API_KEY", "\"${project.findProperty('GEMINI_API_KEY') ?: ''}\""
     }
 
     buildTypes {
@@ -28,6 +31,7 @@ android {
     }
     buildFeatures {
         mlModelBinding true
+        buildConfig true
     }
 }
 
@@ -46,4 +50,8 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
     implementation 'com.karumi:dexter:6.2.2'
 
+    // OkHttp for Claude API calls
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    // Gson for JSON parsing
+    implementation 'com.google.code.gson:gson:2.10.1'
 }
