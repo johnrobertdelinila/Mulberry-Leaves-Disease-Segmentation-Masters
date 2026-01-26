@@ -103,13 +103,23 @@ public class ClassificationResult {
      */
     public String getDisplayClassName() {
         if (className == null) return "Unknown";
+
         switch (className) {
             case "Disease Free Leaves":
-                return "No Visible Leaf Spot Detected";
+                // 100% confidence = healthy, otherwise early spot
+                if (confidence >= 1.0f) {
+                    return "No Visible Leaf Spot Detected";
+                } else {
+                    return "Early Spot Detected";
+                }
             case "Potential Leaf Rust":
-                return "Early Spot Detected";
             case "Potential Leaf Spot":
-                return "Potential Leaf Spot";
+                // >= 90% confidence = Potential Leaf Spot, otherwise Early Spot
+                if (confidence >= 0.90f) {
+                    return "Potential Leaf Spot";
+                } else {
+                    return "Early Spot Detected";
+                }
             default:
                 return className;
         }
