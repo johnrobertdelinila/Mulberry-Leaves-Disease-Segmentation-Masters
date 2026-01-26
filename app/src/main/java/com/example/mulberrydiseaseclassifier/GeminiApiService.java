@@ -161,6 +161,10 @@ public class GeminiApiService {
             return;
         }
 
+        // Reset to first key at start of each analysis
+        AppPreferences.resetApiKeyIndex(context);
+        Log.d(TAG, "Starting analysis with " + API_KEYS.length + " available API keys");
+
         long startTime = System.currentTimeMillis();
 
         // Convert bitmap to base64
@@ -204,10 +208,14 @@ public class GeminiApiService {
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 long processingTime = System.currentTimeMillis() - startTime;
+                int responseCode = response.code();
 
-                // Check for rate limit (HTTP 429)
-                if (response.code() == 429) {
-                    Log.w(TAG, "Rate limit hit (429) on key index: " + AppPreferences.getCurrentApiKeyIndex(context));
+                // Check for errors that should trigger key rotation
+                // 429 = Rate limit, 400 = Bad request, 401 = Unauthorized, 403 = Forbidden/Quota exceeded
+                if (responseCode == 429 || responseCode == 400 || responseCode == 401 || responseCode == 403) {
+                    String errorBody = response.body() != null ? response.body().string() : "Unknown error";
+                    Log.w(TAG, "API error (" + responseCode + ") on key index " +
+                        AppPreferences.getCurrentApiKeyIndex(context) + ": " + errorBody);
 
                     // Try to switch to next key
                     if (switchToNextKey()) {
@@ -216,8 +224,8 @@ public class GeminiApiService {
                         analyzeWithCurrentKey(requestJson, bitmap, callback, startTime);
                         return;
                     } else {
-                        // All keys exhausted
-                        Log.w(TAG, "All API keys exhausted, invoking fallback");
+                        // All keys exhausted - fall back to local ML
+                        Log.w(TAG, "All API keys exhausted (last error: " + responseCode + "), invoking fallback");
                         callback.onRateLimitExhausted();
                         return;
                     }
@@ -225,8 +233,14 @@ public class GeminiApiService {
 
                 if (!response.isSuccessful()) {
                     String errorBody = response.body() != null ? response.body().string() : "Unknown error";
-                    Log.e(TAG, "API error: " + response.code() + " - " + errorBody);
-                    callback.onError("API error: " + response.code());
+                    Log.e(TAG, "API error: " + responseCode + " - " + errorBody);
+                    // For other errors (500, 502, etc.), also try next key
+                    if (switchToNextKey()) {
+                        Log.d(TAG, "Server error, retrying with next API key...");
+                        analyzeWithCurrentKey(requestJson, bitmap, callback, startTime);
+                        return;
+                    }
+                    callback.onRateLimitExhausted();
                     return;
                 }
 
@@ -238,11 +252,22 @@ public class GeminiApiService {
                     if (result != null) {
                         callback.onSuccess(result, processingTime);
                     } else {
-                        callback.onError("Failed to parse AI response");
+                        // Parse failed - try next key in case response was malformed
+                        Log.e(TAG, "Failed to parse response, trying next key");
+                        if (switchToNextKey()) {
+                            analyzeWithCurrentKey(requestJson, bitmap, callback, startTime);
+                            return;
+                        }
+                        callback.onRateLimitExhausted();
                     }
                 } catch (Exception e) {
                     Log.e(TAG, "Error parsing response", e);
-                    callback.onError("Error processing AI response");
+                    // On exception, try next key
+                    if (switchToNextKey()) {
+                        analyzeWithCurrentKey(requestJson, bitmap, callback, startTime);
+                        return;
+                    }
+                    callback.onRateLimitExhausted();
                 }
             }
         });
