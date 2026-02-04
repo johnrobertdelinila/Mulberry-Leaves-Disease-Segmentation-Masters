@@ -89,15 +89,38 @@ public class GeminiApiService {
     }
 
     /**
-     * Get API keys from BuildConfig
-     * @return Array of API keys (single key from gradle.properties)
+     * Get API keys from BuildConfig for smart rotation
+     * @return Array of API keys (6 keys from gradle.properties)
      */
     private static String[] getApiKeys() {
-        String primaryKey = BuildConfig.GEMINI_API_KEY;
-        if (primaryKey != null && !primaryKey.isEmpty()) {
-            return new String[] { primaryKey };
+        // Collect all non-empty API keys
+        String[] allKeys = {
+            BuildConfig.GEMINI_API_KEY_1,
+            BuildConfig.GEMINI_API_KEY_2,
+            BuildConfig.GEMINI_API_KEY_3,
+            BuildConfig.GEMINI_API_KEY_4,
+            BuildConfig.GEMINI_API_KEY_5,
+            BuildConfig.GEMINI_API_KEY_6
+        };
+
+        // Count valid keys
+        int validCount = 0;
+        for (String key : allKeys) {
+            if (key != null && !key.isEmpty()) {
+                validCount++;
+            }
         }
-        return new String[] {};
+
+        // Return only valid keys
+        String[] validKeys = new String[validCount];
+        int index = 0;
+        for (String key : allKeys) {
+            if (key != null && !key.isEmpty()) {
+                validKeys[index++] = key;
+            }
+        }
+
+        return validKeys;
     }
 
     /**

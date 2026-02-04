@@ -15,8 +15,13 @@ android {
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
-        // Gemini API Key - set in gradle.properties as GEMINI_API_KEY=AIza...
-        buildConfigField "String", "GEMINI_API_KEY", "\"${project.findProperty('GEMINI_API_KEY') ?: ''}\""
+        // Gemini API Keys for smart rotation - set in gradle.properties
+        buildConfigField "String", "GEMINI_API_KEY_1", "\"${project.findProperty('GEMINI_API_KEY_1') ?: ''}\""
+        buildConfigField "String", "GEMINI_API_KEY_2", "\"${project.findProperty('GEMINI_API_KEY_2') ?: ''}\""
+        buildConfigField "String", "GEMINI_API_KEY_3", "\"${project.findProperty('GEMINI_API_KEY_3') ?: ''}\""
+        buildConfigField "String", "GEMINI_API_KEY_4", "\"${project.findProperty('GEMINI_API_KEY_4') ?: ''}\""
+        buildConfigField "String", "GEMINI_API_KEY_5", "\"${project.findProperty('GEMINI_API_KEY_5') ?: ''}\""
+        buildConfigField "String", "GEMINI_API_KEY_6", "\"${project.findProperty('GEMINI_API_KEY_6') ?: ''}\""
     }
 
     buildTypes {
