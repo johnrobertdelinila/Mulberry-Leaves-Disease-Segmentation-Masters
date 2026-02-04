@@ -65,6 +65,9 @@ import java.util.PriorityQueue;
 public class MulberryDiseaseClassifierActivity extends AppCompatActivity {
     private static final String TAG = "MulberryActivity";
 
+    // Track if analysis is complete (for button navigation)
+    private boolean analysisComplete = false;
+
     private TensorImage inputTensorImage;
     private  int imageSizeX;
     private  int imageSizeY;
@@ -79,7 +82,7 @@ public class MulberryDiseaseClassifierActivity extends AppCompatActivity {
     ImageView imageView;
     Uri imageuri;
     Button classifierBtn;
-    TextView classText, accuracyText, timeText, selectImageText, stageValue;
+    TextView classText, accuracyText, timeText, selectImageText, stageValue, actionText;
     private ImageView backBtn, uploadIcon;
     private View placeholderOverlay;
     private MaterialCardView resultsCard, imageCard;
@@ -114,6 +117,7 @@ public class MulberryDiseaseClassifierActivity extends AppCompatActivity {
         metricsRow = findViewById(R.id.metrics_row);
         metricsDivider = findViewById(R.id.metrics_divider);
         progressBar = findViewById(R.id.plant_progressbar);
+        actionText = findViewById(R.id.action_text);
 
         // Initialize Gemini API service with context for smart key rotation
         geminiApiService = new GeminiApiService(this);
@@ -124,6 +128,12 @@ public class MulberryDiseaseClassifierActivity extends AppCompatActivity {
         classifierBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                // If analysis is already complete, go back to Home
+                if (analysisComplete) {
+                    finish();
+                    return;
+                }
+
                 if (bitmap == null) {
                     Toast.makeText(MulberryDiseaseClassifierActivity.this,
                         "Please select an image first", Toast.LENGTH_SHORT).show();
@@ -168,6 +178,7 @@ public class MulberryDiseaseClassifierActivity extends AppCompatActivity {
      * Reset UI when selecting a new image
      */
     private void resetUIForNewSelection() {
+        analysisComplete = false;
         classifierBtn.setText(R.string.classifier_check);
         resultsCard.setVisibility(View.GONE);
         selectImageText.setText(R.string.classifier_tap_to_select);
@@ -487,10 +498,14 @@ public class MulberryDiseaseClassifierActivity extends AppCompatActivity {
         // Update classification text with friendly name
         classText.setText(result.getDisplayClassName());
 
-        // Update icon background based on health status
-        classIconBg.setBackgroundResource(result.isHealthy()
-            ? R.drawable.result_icon_bg_success
-            : R.drawable.result_icon_bg_warning);
+        // Update icon background based on status
+        if (result.isNotLeaf()) {
+            classIconBg.setBackgroundResource(R.drawable.result_icon_bg_warning);
+        } else {
+            classIconBg.setBackgroundResource(result.isHealthy()
+                ? R.drawable.result_icon_bg_success
+                : R.drawable.result_icon_bg_warning);
+        }
 
         // Stage row visibility and value
         stageRow.setVisibility(stagingEnabled ? View.VISIBLE : View.GONE);
@@ -515,15 +530,54 @@ public class MulberryDiseaseClassifierActivity extends AppCompatActivity {
             timeText.setText(result.getProcessingTimeMs() + " ms");
         }
 
-        // Button shows stage only if staging enabled, otherwise show "Done"
-        if (stagingEnabled) {
-            classifierBtn.setText(result.getStageDisplayText());
-        } else {
-            classifierBtn.setText("Done");
-        }
+        // Always show "Done" after analysis (stage is already displayed in the results card)
+        classifierBtn.setText("Done");
+
+        // Mark analysis as complete for button navigation
+        analysisComplete = true;
 
         // Hide instruction text after classification
         selectImageText.setVisibility(View.GONE);
+
+        // Update recommended action
+        updateRecommendedAction(result);
+    }
+
+    /**
+     * Update the recommended action text based on classification result
+     * @param result The classification result
+     */
+    private void updateRecommendedAction(ClassificationResult result) {
+        String displayName = result.getDisplayClassName();
+
+        if (displayName == null) {
+            actionText.setText(R.string.action_healthy);
+            return;
+        }
+
+        switch (displayName) {
+            case "Not a Leaf":
+                actionText.setText(R.string.action_not_leaf);
+                break;
+            case "No Visible Leaf Spot Detected":
+                actionText.setText(R.string.action_healthy);
+                break;
+            case "Potential Leaf Spot":
+                actionText.setText(R.string.action_leaf_spot);
+                break;
+            case "Early Spot Detected":
+                // Determine if it's leaf rust or early detection based on className
+                String className = result.getClassName();
+                if (className != null && className.contains("Rust")) {
+                    actionText.setText(R.string.action_leaf_rust);
+                } else {
+                    actionText.setText(R.string.action_early_spot);
+                }
+                break;
+            default:
+                actionText.setText(R.string.action_early_spot);
+                break;
+        }
     }
 
     /**

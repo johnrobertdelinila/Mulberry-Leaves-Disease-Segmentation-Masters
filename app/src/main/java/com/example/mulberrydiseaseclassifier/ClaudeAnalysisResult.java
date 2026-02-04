@@ -66,6 +66,8 @@ public class ClaudeAnalysisResult {
                 return "Potential Leaf Spot";
             case "Leaf Rust":
                 return "Potential Leaf Rust";
+            case "Not a Leaf":
+                return "Not a Leaf";
             default:
                 return status;
         }

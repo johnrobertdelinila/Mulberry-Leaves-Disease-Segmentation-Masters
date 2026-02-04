@@ -32,8 +32,14 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 
 import com.google.android.material.card.MaterialCardView;
+
+import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 import org.tensorflow.lite.DataType;
 import org.tensorflow.lite.Interpreter;
@@ -69,6 +75,9 @@ public class MulberryScannerClassifierActivity extends Activity {
     private static final int MY_CAMERA_PERMISSION_CODE = 100;
     private static final int CAMERA_REQUEST = 1888;
 
+    // Track if analysis is complete (for button navigation)
+    private boolean analysisComplete = false;
+
     private TensorImage inputTensorImage;
     private  int imageSizeX;
     private  int imageSizeY;
@@ -83,7 +92,7 @@ public class MulberryScannerClassifierActivity extends Activity {
     ImageView imageView;
     Uri imageuri;
     Button classifierBtn;
-    TextView classText, accuracyText, timeText, selectImageText, stageValue;
+    TextView classText, accuracyText, timeText, selectImageText, stageValue, actionText;
     private ImageView backBtn, uploadIcon;
     private View placeholderOverlay;
     private MaterialCardView resultsCard, imageCard;
@@ -92,6 +101,10 @@ public class MulberryScannerClassifierActivity extends Activity {
     private View metricsDivider;
     private ProgressBar progressBar;
     private GeminiApiService geminiApiService;
+
+    // For full-resolution camera capture
+    private Uri photoUri;
+    private String currentPhotoPath;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -118,6 +131,7 @@ public class MulberryScannerClassifierActivity extends Activity {
         metricsRow = findViewById(R.id.metrics_row);
         metricsDivider = findViewById(R.id.metrics_divider);
         progressBar = findViewById(R.id.plant_progressbar);
+        actionText = findViewById(R.id.action_text);
 
         // Initialize Gemini API service with context for smart key rotation
         geminiApiService = new GeminiApiService(this);
@@ -128,26 +142,38 @@ public class MulberryScannerClassifierActivity extends Activity {
         // Update instruction text for camera
         selectImageText.setText(R.string.classifier_tap_to_capture);
 
-        // Check if image was passed from MainActivity camera capture
-        byte[] byteArray = getIntent().getByteArrayExtra("image");
-        if (byteArray != null) {
-            Bitmap bmp = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.length);
-            bitmap = bmp;
+        // Check if photo path was passed from MainActivity camera capture
+        String photoPath = getIntent().getStringExtra("photoPath");
+        if (photoPath != null) {
+            // Load bitmap from file path (avoids TransactionTooLargeException)
+            Bitmap bmp = loadAndDownsampleImage(photoPath, 1024);
+            if (bmp != null) {
+                bitmap = bmp;
+                Log.d(TAG, "Loaded image from path: " + photoPath + " Size: " + bmp.getWidth() + "x" + bmp.getHeight());
 
-            // Show image and hide placeholder
-            imageView.setVisibility(View.VISIBLE);
-            imageView.setImageBitmap(bmp);
-            placeholderOverlay.setVisibility(View.GONE);
-            uploadIcon.setVisibility(View.GONE);
+                // Show image and hide placeholder
+                imageView.setVisibility(View.VISIBLE);
+                imageView.setImageBitmap(bmp);
+                placeholderOverlay.setVisibility(View.GONE);
+                uploadIcon.setVisibility(View.GONE);
 
-            selectImageText.setText(R.string.classifier_image_ready);
+                selectImageText.setText(R.string.classifier_image_ready);
+            } else {
+                Toast.makeText(this, "Failed to load image!", Toast.LENGTH_LONG).show();
+            }
         } else {
-            Toast.makeText(this, "Failed to load image!", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "No image provided!", Toast.LENGTH_LONG).show();
         }
 
         classifierBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                // If analysis is already complete, go back to Home
+                if (analysisComplete) {
+                    finish();
+                    return;
+                }
+
                 if (bitmap == null) {
                     Toast.makeText(MulberryScannerClassifierActivity.this,
                         "Please capture an image first", Toast.LENGTH_SHORT).show();
@@ -183,17 +209,129 @@ public class MulberryScannerClassifierActivity extends Activity {
                 if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
                     requestPermissions(new String[]{Manifest.permission.CAMERA}, MY_CAMERA_PERMISSION_CODE);
                 } else {
-                    Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
-                    startActivityForResult(cameraIntent, CAMERA_REQUEST);
+                    launchCamera();
                 }
             }
         });
     }
 
     /**
+     * Launch camera with full-resolution capture using FileProvider
+     */
+    private void launchCamera() {
+        Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+
+        // Create file for full-resolution photo
+        File photoFile = null;
+        try {
+            photoFile = createImageFile();
+        } catch (IOException ex) {
+            Log.e(TAG, "Error creating image file", ex);
+            Toast.makeText(this, "Error creating image file", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        if (photoFile != null) {
+            photoUri = FileProvider.getUriForFile(this,
+                    getPackageName() + ".fileprovider",
+                    photoFile);
+            cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
+
+            // Grant URI permissions to camera app
+            cameraIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            cameraIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+
+            startActivityForResult(cameraIntent, CAMERA_REQUEST);
+        }
+    }
+
+    /**
+     * Create a temporary file for the camera image
+     */
+    private File createImageFile() throws IOException {
+        // Create image file name with timestamp
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
+        String imageFileName = "JPEG_" + timeStamp + "_";
+
+        // Use cache directory for temporary storage
+        File storageDir = new File(getCacheDir(), "images");
+        if (!storageDir.exists()) {
+            storageDir.mkdirs();
+        }
+
+        File image = File.createTempFile(imageFileName, ".jpg", storageDir);
+        currentPhotoPath = image.getAbsolutePath();
+        Log.d(TAG, "Created image file: " + currentPhotoPath);
+        return image;
+    }
+
+    /**
+     * Load and downsample bitmap to prevent OOM errors
+     * @param imagePath Path to the image file
+     * @param maxDimension Maximum dimension (width or height)
+     * @return Downsampled bitmap
+     */
+    private Bitmap loadAndDownsampleImage(String imagePath, int maxDimension) {
+        // First, get the image dimensions without loading the full bitmap
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(imagePath, options);
+
+        int originalWidth = options.outWidth;
+        int originalHeight = options.outHeight;
+        Log.d(TAG, "Original image size: " + originalWidth + "x" + originalHeight);
+
+        // Calculate inSampleSize
+        int inSampleSize = 1;
+        if (originalWidth > maxDimension || originalHeight > maxDimension) {
+            int halfWidth = originalWidth / 2;
+            int halfHeight = originalHeight / 2;
+
+            while ((halfWidth / inSampleSize) >= maxDimension
+                    && (halfHeight / inSampleSize) >= maxDimension) {
+                inSampleSize *= 2;
+            }
+        }
+
+        // Decode with inSampleSize
+        options.inJustDecodeBounds = false;
+        options.inSampleSize = inSampleSize;
+        Bitmap sampledBitmap = BitmapFactory.decodeFile(imagePath, options);
+
+        if (sampledBitmap == null) {
+            Log.e(TAG, "Failed to decode bitmap from: " + imagePath);
+            return null;
+        }
+
+        // Further scale if needed to exact max dimension
+        int width = sampledBitmap.getWidth();
+        int height = sampledBitmap.getHeight();
+        Log.d(TAG, "Sampled bitmap size: " + width + "x" + height);
+
+        if (width > maxDimension || height > maxDimension) {
+            float scale = Math.min(
+                    (float) maxDimension / width,
+                    (float) maxDimension / height
+            );
+            int newWidth = Math.round(width * scale);
+            int newHeight = Math.round(height * scale);
+
+            Bitmap scaledBitmap = Bitmap.createScaledBitmap(sampledBitmap, newWidth, newHeight, true);
+            if (scaledBitmap != sampledBitmap) {
+                sampledBitmap.recycle();
+            }
+            Log.d(TAG, "Final bitmap size: " + newWidth + "x" + newHeight);
+            return scaledBitmap;
+        }
+
+        return sampledBitmap;
+    }
+
+    /**
      * Reset UI when capturing a new image
      */
     private void resetUIForNewCapture() {
+        analysisComplete = false;
         classifierBtn.setText(R.string.classifier_check);
         resultsCard.setVisibility(View.GONE);
         selectImageText.setText(R.string.classifier_tap_to_capture);
@@ -208,8 +346,7 @@ public class MulberryScannerClassifierActivity extends Activity {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED)
             {
                 Toast.makeText(this, "Camera permission granted!", Toast.LENGTH_LONG).show();
-                Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
-                startActivityForResult(cameraIntent, CAMERA_REQUEST);
+                launchCamera();
             }
             else
             {
@@ -222,26 +359,35 @@ public class MulberryScannerClassifierActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == CAMERA_REQUEST && resultCode == Activity.RESULT_OK && data != null && data.getExtras() != null) {
-            Bitmap photo = (Bitmap) data.getExtras().get("data");
-            if (photo != null) {
-                Toast.makeText(this, "Scan successful!", Toast.LENGTH_LONG).show();
-                bitmap = photo;
+        if (requestCode == CAMERA_REQUEST && resultCode == Activity.RESULT_OK) {
+            // Load full-resolution image from file and downsample to 1024px
+            if (currentPhotoPath != null) {
+                Bitmap photo = loadAndDownsampleImage(currentPhotoPath, 1024);
+                if (photo != null) {
+                    Toast.makeText(this, "Scan successful!", Toast.LENGTH_LONG).show();
+                    Log.d(TAG, "Re-captured image size: " + photo.getWidth() + "x" + photo.getHeight());
+                    bitmap = photo;
 
-                // Show image and hide placeholder
-                imageView.setVisibility(View.VISIBLE);
-                imageView.setImageBitmap(photo);
-                placeholderOverlay.setVisibility(View.GONE);
-                uploadIcon.setVisibility(View.GONE);
+                    // Show image and hide placeholder
+                    imageView.setVisibility(View.VISIBLE);
+                    imageView.setImageBitmap(photo);
+                    placeholderOverlay.setVisibility(View.GONE);
+                    uploadIcon.setVisibility(View.GONE);
 
-                selectImageText.setText(R.string.classifier_image_ready);
+                    selectImageText.setText(R.string.classifier_image_ready);
+                } else {
+                    Toast.makeText(this, "Failed to load captured image!", Toast.LENGTH_LONG).show();
+                    showPlaceholder();
+                }
             } else {
                 Toast.makeText(this, "Failed to capture image!", Toast.LENGTH_LONG).show();
                 showPlaceholder();
             }
-        } else {
-            Toast.makeText(this, "Scan unsuccessful!", Toast.LENGTH_LONG).show();
-            showPlaceholder();
+        } else if (requestCode == CAMERA_REQUEST) {
+            // User cancelled - don't show error if bitmap already exists
+            if (bitmap == null) {
+                showPlaceholder();
+            }
         }
     }
 
@@ -568,10 +714,14 @@ public class MulberryScannerClassifierActivity extends Activity {
         // Update classification text with friendly name
         classText.setText(result.getDisplayClassName());
 
-        // Update icon background based on health status
-        classIconBg.setBackgroundResource(result.isHealthy()
-            ? R.drawable.result_icon_bg_success
-            : R.drawable.result_icon_bg_warning);
+        // Update icon background based on status
+        if (result.isNotLeaf()) {
+            classIconBg.setBackgroundResource(R.drawable.result_icon_bg_warning);
+        } else {
+            classIconBg.setBackgroundResource(result.isHealthy()
+                ? R.drawable.result_icon_bg_success
+                : R.drawable.result_icon_bg_warning);
+        }
 
         // Stage row visibility and value
         stageRow.setVisibility(stagingEnabled ? View.VISIBLE : View.GONE);
@@ -596,15 +746,54 @@ public class MulberryScannerClassifierActivity extends Activity {
             timeText.setText(result.getProcessingTimeMs() + " ms");
         }
 
-        // Button shows stage only if staging enabled, otherwise show "Done"
-        if (stagingEnabled) {
-            classifierBtn.setText(result.getStageDisplayText());
-        } else {
-            classifierBtn.setText("Done");
-        }
+        // Always show "Done" after analysis (stage is already displayed in the results card)
+        classifierBtn.setText("Done");
+
+        // Mark analysis as complete for button navigation
+        analysisComplete = true;
 
         // Hide instruction text after classification
         selectImageText.setVisibility(View.GONE);
+
+        // Update recommended action
+        updateRecommendedAction(result);
+    }
+
+    /**
+     * Update the recommended action text based on classification result
+     * @param result The classification result
+     */
+    private void updateRecommendedAction(ClassificationResult result) {
+        String displayName = result.getDisplayClassName();
+
+        if (displayName == null) {
+            actionText.setText(R.string.action_healthy);
+            return;
+        }
+
+        switch (displayName) {
+            case "Not a Leaf":
+                actionText.setText(R.string.action_not_leaf);
+                break;
+            case "No Visible Leaf Spot Detected":
+                actionText.setText(R.string.action_healthy);
+                break;
+            case "Potential Leaf Spot":
+                actionText.setText(R.string.action_leaf_spot);
+                break;
+            case "Early Spot Detected":
+                // Determine if it's leaf rust or early detection based on className
+                String className = result.getClassName();
+                if (className != null && className.contains("Rust")) {
+                    actionText.setText(R.string.action_leaf_rust);
+                } else {
+                    actionText.setText(R.string.action_early_spot);
+                }
+                break;
+            default:
+                actionText.setText(R.string.action_early_spot);
+                break;
+        }
     }
 
     /**

@@ -120,6 +120,8 @@ public class ClassificationResult {
                 } else {
                     return "Early Spot Detected";
                 }
+            case "Not a Leaf":
+                return "Not a Leaf";
             default:
                 return className;
         }
@@ -131,6 +133,14 @@ public class ClassificationResult {
      */
     public boolean isHealthy() {
         return stage == 0;
+    }
+
+    /**
+     * Check if the classification indicates the image is not a leaf
+     * @return true if className is "Not a Leaf"
+     */
+    public boolean isNotLeaf() {
+        return className != null && className.equals("Not a Leaf");
     }
 
     /**

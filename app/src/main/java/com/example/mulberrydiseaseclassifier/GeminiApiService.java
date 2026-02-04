@@ -37,36 +37,33 @@ public class GeminiApiService {
 
     private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
 
-    // Multiple API keys for smart rotation when rate limits are hit
-    private static final String[] API_KEYS = {
-        "AIzaSyAwNkM6FJRdMq-9z05ZGPm20KKsXcH_R-c",
-        "AIzaSyA2Dl3_cmIoSBh3YNnauzV_QBEi7sVVHiE",
-        "AIzaSyDdz4XLAbyx2Z3jfRUjt2Zbe3du_pfOjQc"
-    };
-
     private final OkHttpClient client;
     private final Gson gson;
     private final Context context;
+    private final String[] apiKeys;
 
     /**
      * Analysis prompt for Gemini to analyze mulberry leaf images.
      */
     private static final String ANALYSIS_PROMPT =
-        "You are an expert plant pathologist analyzing a mulberry leaf image.\n\n" +
+        "You are an expert plant pathologist analyzing an image.\n\n" +
+        "FIRST, determine if the image contains a mulberry leaf. If NOT, return \"Not a Leaf\".\n\n" +
         "CLASSIFICATION RULES:\n" +
-        "- \"Healthy\": Green leaf with NO visible spots, lesions, discoloration, or rust pustules. Minor natural variations in color are normal.\n" +
-        "- \"Leaf Spot\": Has circular/irregular brown, black, or tan spots on the leaf surface.\n" +
-        "- \"Leaf Rust\": Has orange, yellow, or reddish-brown powdery pustules, typically on leaf underside.\n\n" +
-        "IMPORTANT: If the leaf looks mostly green and healthy with no clear disease symptoms, classify as \"Healthy\" with stage 0.\n\n" +
-        "Disease severity stages:\n" +
+        "- \"Not a Leaf\": Image does NOT contain a mulberry leaf (e.g., other objects, non-plant items, other plants)\n" +
+        "- \"Healthy\": Green mulberry leaf with NO visible spots, lesions, discoloration, or rust pustules\n" +
+        "- \"Leaf Spot\": Mulberry leaf with circular/irregular brown, black, or tan spots\n" +
+        "- \"Leaf Rust\": Mulberry leaf with orange, yellow, or reddish-brown powdery pustules\n\n" +
+        "IMPORTANT: If the image is NOT a mulberry leaf, always return \"Not a Leaf\" with stage -1.\n\n" +
+        "Disease severity stages (only for actual leaves):\n" +
+        "- Stage -1: Not a leaf\n" +
         "- Stage 0: Healthy, no disease\n" +
-        "- Stage 1-2: Early/mild infection (few small spots)\n" +
-        "- Stage 3-4: Moderate infection (multiple spots, some spread)\n" +
-        "- Stage 5-6: Severe infection (extensive damage, leaf deterioration)\n\n" +
-        "Respond ONLY with valid JSON (no other text):\n" +
+        "- Stage 1-2: Early/mild infection\n" +
+        "- Stage 3-4: Moderate infection\n" +
+        "- Stage 5-6: Severe infection\n\n" +
+        "Respond ONLY with valid JSON:\n" +
         "{\n" +
-        "  \"status\": \"Healthy\" | \"Leaf Spot\" | \"Leaf Rust\",\n" +
-        "  \"stage\": 0-6,\n" +
+        "  \"status\": \"Not a Leaf\" | \"Healthy\" | \"Leaf Spot\" | \"Leaf Rust\",\n" +
+        "  \"stage\": -1 to 6,\n" +
         "  \"confidence\": \"High\" | \"Medium\" | \"Low\",\n" +
         "  \"explanation\": \"brief 1-2 sentence explanation\"\n" +
         "}";
@@ -88,6 +85,19 @@ public class GeminiApiService {
             .writeTimeout(60, TimeUnit.SECONDS)
             .build();
         this.gson = new Gson();
+        this.apiKeys = getApiKeys();
+    }
+
+    /**
+     * Get API keys from BuildConfig
+     * @return Array of API keys (single key from gradle.properties)
+     */
+    private static String[] getApiKeys() {
+        String primaryKey = BuildConfig.GEMINI_API_KEY;
+        if (primaryKey != null && !primaryKey.isEmpty()) {
+            return new String[] { primaryKey };
+        }
+        return new String[] {};
     }
 
     /**
@@ -96,10 +106,13 @@ public class GeminiApiService {
      */
     private String getCurrentApiKey() {
         int index = AppPreferences.getCurrentApiKeyIndex(context);
-        if (index >= 0 && index < API_KEYS.length) {
-            return API_KEYS[index];
+        if (index >= 0 && index < apiKeys.length) {
+            return apiKeys[index];
         }
-        return API_KEYS[0];
+        if (apiKeys.length > 0) {
+            return apiKeys[0];
+        }
+        return "";
     }
 
     /**
@@ -108,7 +121,7 @@ public class GeminiApiService {
      */
     private boolean hasMoreKeys() {
         int currentIndex = AppPreferences.getCurrentApiKeyIndex(context);
-        return currentIndex < API_KEYS.length - 1;
+        return currentIndex < apiKeys.length - 1;
     }
 
     /**
@@ -119,7 +132,7 @@ public class GeminiApiService {
         int currentIndex = AppPreferences.getCurrentApiKeyIndex(context);
         int nextIndex = currentIndex + 1;
 
-        if (nextIndex < API_KEYS.length) {
+        if (nextIndex < apiKeys.length) {
             AppPreferences.setCurrentApiKeyIndex(context, nextIndex);
             Log.d(TAG, "Switching to API key index: " + nextIndex);
             return true;
@@ -132,7 +145,7 @@ public class GeminiApiService {
      * @return true if API keys are available
      */
     public boolean isApiKeyConfigured() {
-        return API_KEYS != null && API_KEYS.length > 0 && API_KEYS[0] != null && !API_KEYS[0].isEmpty();
+        return apiKeys != null && apiKeys.length > 0 && apiKeys[0] != null && !apiKeys[0].isEmpty();
     }
 
     /**
@@ -163,7 +176,7 @@ public class GeminiApiService {
 
         // Reset to first key at start of each analysis
         AppPreferences.resetApiKeyIndex(context);
-        Log.d(TAG, "Starting analysis with " + API_KEYS.length + " available API keys");
+        Log.d(TAG, "Starting analysis with " + apiKeys.length + " available API keys");
 
         long startTime = System.currentTimeMillis();
 

@@ -81,4 +81,12 @@
     <string name="gemini_error">Analysis failed. Please try again.</string>
     <string name="gemini_api_key_missing">Analysis failed. Please try again.</string>
 
+    <!-- Recommended Actions -->
+    <string name="classifier_recommended_action">Recommended Action</string>
+    <string name="action_healthy">Continue regular care. Ensure adequate water, sunlight, and ventilation.</string>
+    <string name="action_leaf_spot">1. Remove affected leaves and dispose properly.\n2. Avoid overhead watering.\n3. Apply fungicide if needed.</string>
+    <string name="action_leaf_rust">1. Remove and burn affected leaves.\n2. Improve air circulation around the plant.\n3. Apply fungicide to prevent spread.</string>
+    <string name="action_early_spot">1. Monitor the plant closely for additional symptoms.\n2. Ensure plant health through proper watering.\n3. Re-check after 3-5 days.</string>
+    <string name="action_not_leaf">This image does not appear to be a mulberry leaf. Please take a clear photo of a single mulberry leaf for accurate analysis.</string>
+
 </resources>
