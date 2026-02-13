@@ -81,11 +81,21 @@ public class ClaudeAnalysisResult {
     public ClassificationResult toClassificationResult(long processingTimeMs) {
         return new ClassificationResult(
             toClassName(),
-            -1f, // Confidence not applicable for Claude (uses textual confidence)
+            mapConfidenceToNumeric(confidence),
             processingTimeMs,
             stage,
             explanation,
             true // fromClaude flag
         );
+    }
+
+    private float mapConfidenceToNumeric(String textConfidence) {
+        if (textConfidence == null) return 0.50f;
+        switch (textConfidence) {
+            case "High":   return 0.95f;
+            case "Medium": return 0.75f;
+            case "Low":    return 0.50f;
+            default:       return 0.50f;
+        }
     }
 }

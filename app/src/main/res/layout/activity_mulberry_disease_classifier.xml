@@ -378,6 +378,64 @@
                     android:textSize="11sp"
                     android:textStyle="italic" />
 
+                <!-- Recommended Action Section -->
+                <View
+                    android:id="@+id/action_divider"
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="16dp"
+                    android:background="@color/home_divider" />
+
+                <LinearLayout
+                    android:id="@+id/action_header_row"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <FrameLayout
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="@drawable/icon_circle_bg_large">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_lightbulb" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:id="@+id/action_header_text"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:layout_weight="1"
+                        android:fontFamily="@font/montserrat_bold"
+                        android:text="@string/classifier_recommended_action"
+                        android:textColor="@color/home_text_primary"
+                        android:textSize="14sp" />
+                </LinearLayout>
+
+                <ScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:fillViewport="true">
+
+                    <TextView
+                        android:id="@+id/action_text"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/montserrat"
+                        android:lineSpacingExtra="4dp"
+                        android:textColor="@color/home_text_secondary"
+                        android:textSize="13sp"
+                        tools:text="1. Remove affected leaves...\n2. Avoid overhead watering..." />
+
+                </ScrollView>
+
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 

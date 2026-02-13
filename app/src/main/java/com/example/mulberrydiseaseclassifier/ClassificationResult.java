@@ -106,20 +106,11 @@ public class ClassificationResult {
 
         switch (className) {
             case "Disease Free Leaves":
-                // 100% confidence = healthy, otherwise early spot
-                if (confidence >= 1.0f) {
-                    return "No Visible Leaf Spot Detected";
-                } else {
-                    return "Early Spot Detected";
-                }
+                return "No Visible Leaf Spot Detected";
             case "Potential Leaf Rust":
+                return "Early Spot Detected";
             case "Potential Leaf Spot":
-                // >= 90% confidence = Potential Leaf Spot, otherwise Early Spot
-                if (confidence >= 0.90f) {
-                    return "Potential Leaf Spot";
-                } else {
-                    return "Early Spot Detected";
-                }
+                return "Potential Leaf Spot";
             case "Not a Leaf":
                 return "Not a Leaf";
             default:

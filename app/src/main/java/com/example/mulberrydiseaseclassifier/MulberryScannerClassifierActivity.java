@@ -9,7 +9,10 @@ import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.graphics.RectF;
+
+import androidx.exifinterface.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -92,7 +95,7 @@ public class MulberryScannerClassifierActivity extends Activity {
     ImageView imageView;
     Uri imageuri;
     Button classifierBtn;
-    TextView classText, accuracyText, timeText, selectImageText, stageValue, actionText;
+    TextView classText, accuracyText, timeText, selectImageText, stageValue, actionText, actionHeaderText;
     private ImageView backBtn, uploadIcon;
     private View placeholderOverlay;
     private MaterialCardView resultsCard, imageCard;
@@ -132,6 +135,7 @@ public class MulberryScannerClassifierActivity extends Activity {
         metricsDivider = findViewById(R.id.metrics_divider);
         progressBar = findViewById(R.id.plant_progressbar);
         actionText = findViewById(R.id.action_text);
+        actionHeaderText = findViewById(R.id.action_header_text);
 
         // Initialize Gemini API service with context for smart key rotation
         geminiApiService = new GeminiApiService(this);
@@ -321,10 +325,63 @@ public class MulberryScannerClassifierActivity extends Activity {
                 sampledBitmap.recycle();
             }
             Log.d(TAG, "Final bitmap size: " + newWidth + "x" + newHeight);
-            return scaledBitmap;
+            // Apply EXIF rotation
+            return getRotatedBitmap(scaledBitmap, imagePath);
         }
 
-        return sampledBitmap;
+        // Apply EXIF rotation
+        return getRotatedBitmap(sampledBitmap, imagePath);
+    }
+
+    /**
+     * Rotate bitmap based on EXIF orientation data
+     * @param bitmap Original bitmap
+     * @param imagePath Path to the image file (for EXIF reading)
+     * @return Correctly rotated bitmap
+     */
+    private Bitmap getRotatedBitmap(Bitmap bitmap, String imagePath) {
+        try {
+            ExifInterface exif = new ExifInterface(imagePath);
+            int orientation = exif.getAttributeInt(
+                ExifInterface.TAG_ORIENTATION,
+                ExifInterface.ORIENTATION_NORMAL
+            );
+
+            Matrix matrix = new Matrix();
+            switch (orientation) {
+                case ExifInterface.ORIENTATION_ROTATE_90:
+                    matrix.postRotate(90);
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_180:
+                    matrix.postRotate(180);
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_270:
+                    matrix.postRotate(270);
+                    break;
+                case ExifInterface.ORIENTATION_FLIP_HORIZONTAL:
+                    matrix.preScale(-1.0f, 1.0f);
+                    break;
+                case ExifInterface.ORIENTATION_FLIP_VERTICAL:
+                    matrix.preScale(1.0f, -1.0f);
+                    break;
+                default:
+                    return bitmap; // No rotation needed
+            }
+
+            Bitmap rotatedBitmap = Bitmap.createBitmap(
+                bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true
+            );
+
+            if (rotatedBitmap != bitmap) {
+                bitmap.recycle();
+            }
+
+            Log.d(TAG, "Rotated bitmap from orientation: " + orientation);
+            return rotatedBitmap;
+        } catch (IOException e) {
+            Log.e(TAG, "Error reading EXIF data", e);
+            return bitmap;
+        }
     }
 
     /**
@@ -767,30 +824,30 @@ public class MulberryScannerClassifierActivity extends Activity {
         String displayName = result.getDisplayClassName();
 
         if (displayName == null) {
+            actionHeaderText.setText(R.string.classifier_recommended_action);
             actionText.setText(R.string.action_healthy);
             return;
         }
 
         switch (displayName) {
             case "Not a Leaf":
+                actionHeaderText.setText(R.string.classifier_recommended_action);
                 actionText.setText(R.string.action_not_leaf);
                 break;
             case "No Visible Leaf Spot Detected":
+                actionHeaderText.setText(R.string.classifier_recommended_action);
                 actionText.setText(R.string.action_healthy);
                 break;
             case "Potential Leaf Spot":
+                actionHeaderText.setText(R.string.classifier_immediate_action);
                 actionText.setText(R.string.action_leaf_spot);
                 break;
             case "Early Spot Detected":
-                // Determine if it's leaf rust or early detection based on className
-                String className = result.getClassName();
-                if (className != null && className.contains("Rust")) {
-                    actionText.setText(R.string.action_leaf_rust);
-                } else {
-                    actionText.setText(R.string.action_early_spot);
-                }
+                actionHeaderText.setText(R.string.classifier_immediate_action);
+                actionText.setText(R.string.action_early_spot);
                 break;
             default:
+                actionHeaderText.setText(R.string.classifier_immediate_action);
                 actionText.setText(R.string.action_early_spot);
                 break;
         }

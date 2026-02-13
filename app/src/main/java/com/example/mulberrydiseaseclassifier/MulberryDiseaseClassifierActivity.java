@@ -8,6 +8,8 @@ import android.content.res.AssetFileDescriptor;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.graphics.RectF;
+
+import androidx.exifinterface.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -51,6 +53,7 @@ import org.tensorflow.lite.support.tensorbuffer.TensorBuffer;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
@@ -82,7 +85,7 @@ public class MulberryDiseaseClassifierActivity extends AppCompatActivity {
     ImageView imageView;
     Uri imageuri;
     Button classifierBtn;
-    TextView classText, accuracyText, timeText, selectImageText, stageValue, actionText;
+    TextView classText, accuracyText, timeText, selectImageText, stageValue, actionText, actionHeaderText;
     private ImageView backBtn, uploadIcon;
     private View placeholderOverlay;
     private MaterialCardView resultsCard, imageCard;
@@ -118,6 +121,7 @@ public class MulberryDiseaseClassifierActivity extends AppCompatActivity {
         metricsDivider = findViewById(R.id.metrics_divider);
         progressBar = findViewById(R.id.plant_progressbar);
         actionText = findViewById(R.id.action_text);
+        actionHeaderText = findViewById(R.id.action_header_text);
 
         // Initialize Gemini API service with context for smart key rotation
         geminiApiService = new GeminiApiService(this);
@@ -551,30 +555,30 @@ public class MulberryDiseaseClassifierActivity extends AppCompatActivity {
         String displayName = result.getDisplayClassName();
 
         if (displayName == null) {
+            actionHeaderText.setText(R.string.classifier_recommended_action);
             actionText.setText(R.string.action_healthy);
             return;
         }
 
         switch (displayName) {
             case "Not a Leaf":
+                actionHeaderText.setText(R.string.classifier_recommended_action);
                 actionText.setText(R.string.action_not_leaf);
                 break;
             case "No Visible Leaf Spot Detected":
+                actionHeaderText.setText(R.string.classifier_recommended_action);
                 actionText.setText(R.string.action_healthy);
                 break;
             case "Potential Leaf Spot":
+                actionHeaderText.setText(R.string.classifier_immediate_action);
                 actionText.setText(R.string.action_leaf_spot);
                 break;
             case "Early Spot Detected":
-                // Determine if it's leaf rust or early detection based on className
-                String className = result.getClassName();
-                if (className != null && className.contains("Rust")) {
-                    actionText.setText(R.string.action_leaf_rust);
-                } else {
-                    actionText.setText(R.string.action_early_spot);
-                }
+                actionHeaderText.setText(R.string.classifier_immediate_action);
+                actionText.setText(R.string.action_early_spot);
                 break;
             default:
+                actionHeaderText.setText(R.string.classifier_immediate_action);
                 actionText.setText(R.string.action_early_spot);
                 break;
         }
@@ -922,6 +926,61 @@ public class MulberryDiseaseClassifierActivity extends AppCompatActivity {
         return downsampled;
     }
 
+    /**
+     * Rotate bitmap based on EXIF orientation data from Uri
+     * @param bitmap Original bitmap
+     * @param imageUri Uri of the image (for EXIF reading)
+     * @return Correctly rotated bitmap
+     */
+    private Bitmap getRotatedBitmapFromUri(Bitmap bitmap, Uri imageUri) {
+        try {
+            InputStream inputStream = getContentResolver().openInputStream(imageUri);
+            if (inputStream == null) return bitmap;
+
+            ExifInterface exif = new ExifInterface(inputStream);
+            int orientation = exif.getAttributeInt(
+                ExifInterface.TAG_ORIENTATION,
+                ExifInterface.ORIENTATION_NORMAL
+            );
+            inputStream.close();
+
+            Matrix matrix = new Matrix();
+            switch (orientation) {
+                case ExifInterface.ORIENTATION_ROTATE_90:
+                    matrix.postRotate(90);
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_180:
+                    matrix.postRotate(180);
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_270:
+                    matrix.postRotate(270);
+                    break;
+                case ExifInterface.ORIENTATION_FLIP_HORIZONTAL:
+                    matrix.preScale(-1.0f, 1.0f);
+                    break;
+                case ExifInterface.ORIENTATION_FLIP_VERTICAL:
+                    matrix.preScale(1.0f, -1.0f);
+                    break;
+                default:
+                    return bitmap; // No rotation needed
+            }
+
+            Bitmap rotatedBitmap = Bitmap.createBitmap(
+                bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true
+            );
+
+            if (rotatedBitmap != bitmap) {
+                bitmap.recycle();
+            }
+
+            Log.d(TAG, "Rotated bitmap from orientation: " + orientation);
+            return rotatedBitmap;
+        } catch (IOException e) {
+            Log.e(TAG, "Error reading EXIF from Uri", e);
+            return bitmap;
+        }
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -934,6 +993,10 @@ public class MulberryDiseaseClassifierActivity extends AppCompatActivity {
 
                 // Downsample to max 1024px to prevent OOM while maintaining quality
                 bitmap = downsampleBitmap(originalBitmap, 1024);
+                Log.d(TAG, "Downsampled Bitmap Width: "+ bitmap.getWidth() +  " Height: "+ bitmap.getHeight());
+
+                // Apply EXIF rotation for gallery images
+                bitmap = getRotatedBitmapFromUri(bitmap, imageuri);
                 Log.d(TAG, "Final Bitmap Width: "+ bitmap.getWidth() +  " Height: "+ bitmap.getHeight());
 
                 // Show image and hide placeholder
